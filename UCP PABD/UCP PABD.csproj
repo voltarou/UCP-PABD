@@ -49,10 +49,49 @@
     <Compile Include="FormCustomer.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Game.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Game.Designer.cs">
+      <DependentUpon>Game.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Login.Designer.cs">
+      <DependentUpon>Login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Metode-Pembayaran.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Metode-Pembayaran.Designer.cs">
+      <DependentUpon>Metode-Pembayaran.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Top-UP.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Top-UP.Designer.cs">
+      <DependentUpon>Top-UP.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Transaksi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Transaksi.Designer.cs">
+      <DependentUpon>Transaksi.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="FormCustomer.resx">
       <DependentUpon>FormCustomer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Game.resx">
+      <DependentUpon>Game.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Login.resx">
+      <DependentUpon>Login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Metode-Pembayaran.resx">
+      <DependentUpon>Metode-Pembayaran.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -62,7 +101,14 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="Top-UP.resx">
+      <DependentUpon>Top-UP.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Transaksi.resx">
+      <DependentUpon>Transaksi.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -75,6 +121,42 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Ruan Mei.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\1438547-honkai-star-rail-anime-image-board.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\1353722.jpeg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\HSR.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ML.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GI.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\LOL.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\purepng.com-playerunknowns-battlegrounds-logogameslogosplayerunknowns-battlegroundspubg-691522709260kl7uy.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\7536_Free_fire_logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Kafka.jpeg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\1353118.jpeg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\7.jpeg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

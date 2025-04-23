@@ -5,15 +5,29 @@ namespace UCP_PABD
 {
     static class Program
     {
-        /// <summary>
-        /// Titik masuk utama untuk aplikasi.
-        /// </summary>
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormCustomer()); // Ganti nama form kalau form utamanya berbeda
+
+            Login loginForm = new Login();
+            if (loginForm.ShowDialog() == DialogResult.OK)
+            {
+                FormCustomer customerForm = new FormCustomer();
+                if (customerForm.ShowDialog() == DialogResult.OK)
+                {
+                    Application.Run(new Game()); // Game jadi form utama
+                }
+                else
+                {
+                    Application.Exit();
+                }
+            }
+            else
+            {
+                Application.Exit();
+            }
         }
     }
 }
