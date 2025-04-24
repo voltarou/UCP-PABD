@@ -40,6 +40,8 @@
             this.Tambah = new System.Windows.Forms.Button();
             this.CMB = new System.Windows.Forms.ComboBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.ID_Game = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.DGVTOPUUP)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -143,7 +145,7 @@
             // CMB
             // 
             this.CMB.FormattingEnabled = true;
-            this.CMB.Location = new System.Drawing.Point(57, 167);
+            this.CMB.Location = new System.Drawing.Point(57, 197);
             this.CMB.Name = "CMB";
             this.CMB.Size = new System.Drawing.Size(121, 24);
             this.CMB.TabIndex = 11;
@@ -160,11 +162,30 @@
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(55, 153);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(64, 16);
+            this.label2.TabIndex = 12;
+            this.label2.Text = "ID_Game";
+            // 
+            // ID_Game
+            // 
+            this.ID_Game.Location = new System.Drawing.Point(163, 150);
+            this.ID_Game.Name = "ID_Game";
+            this.ID_Game.Size = new System.Drawing.Size(100, 22);
+            this.ID_Game.TabIndex = 13;
+            this.ID_Game.TextChanged += new System.EventHandler(this.ID_Game_TextChanged);
+            // 
             // Top_UP
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1379, 616);
+            this.Controls.Add(this.ID_Game);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.CMB);
             this.Controls.Add(this.Tambah);
             this.Controls.Add(this.Edit);
@@ -200,5 +221,7 @@
         private System.Windows.Forms.Button Edit;
         private System.Windows.Forms.Button Tambah;
         private System.Windows.Forms.ComboBox CMB;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox ID_Game;
     }
 }

@@ -28,6 +28,23 @@ namespace UCP_PABD
             // Validasi angka jika perlu
         }
 
+        private void ID_Game_TextChanged(object sender, EventArgs e)
+        {
+            // Sinkronkan isian ID_Game (TextBox) dengan ComboBox CMB
+            if (int.TryParse(ID_Game.Text, out int idGame))
+            {
+                // Jika ID valid, pilih item yang cocok di ComboBox
+                CMB.SelectedValue = idGame;
+            }
+            else
+            {
+                // Jika teks bukan angka, kosongkan pilihan ComboBox
+                CMB.SelectedIndex = -1;
+            }
+        }
+
+        
+
         private void Tambah_Click(object sender, EventArgs e)
         {
             string namaPaket = NamaPaket.Text;
@@ -37,13 +54,21 @@ namespace UCP_PABD
                 return;
             }
 
-            string query = "INSERT INTO Paket_TopUp (NamaPaket, Harga) VALUES (@NamaPaket, @Harga)";
+            // Validasi ID Game yang dimasukkan langsung di TextBox
+            if (!int.TryParse(ID_Game.Text, out int idGame))
+            {
+                MessageBox.Show("ID Game harus berupa angka.");
+                return;
+            }
+
+            string query = "INSERT INTO Paket_TopUp (NamaPaket, Harga, ID_Game) VALUES (@NamaPaket, @Harga, @ID_Game)";
             using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
             {
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@NamaPaket", namaPaket);
                     command.Parameters.AddWithValue("@Harga", harga);
+                    command.Parameters.AddWithValue("@ID_Game", idGame);  // Menggunakan nilai dari TextBox ID_Game
 
                     try
                     {
@@ -76,7 +101,14 @@ namespace UCP_PABD
                 return;
             }
 
-            string query = "UPDATE Paket_TopUp SET NamaPaket = @NamaPaket, Harga = @Harga WHERE ID_Paket = @ID";
+            // Validasi ID Game yang dimasukkan langsung di TextBox
+            if (!int.TryParse(ID_Game.Text, out int idGame))
+            {
+                MessageBox.Show("ID Game harus berupa angka.");
+                return;
+            }
+
+            string query = "UPDATE Paket_TopUp SET NamaPaket = @NamaPaket, Harga = @Harga, ID_Game = @ID_Game WHERE ID_Paket = @ID";
             using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
             {
                 using (var command = new SqlCommand(query, connection))
@@ -84,6 +116,7 @@ namespace UCP_PABD
                     command.Parameters.AddWithValue("@ID", idPaket);
                     command.Parameters.AddWithValue("@NamaPaket", namaPaket);
                     command.Parameters.AddWithValue("@Harga", harga);
+                    command.Parameters.AddWithValue("@ID_Game", idGame);  // Menggunakan nilai dari TextBox ID_Game
 
                     try
                     {
@@ -99,6 +132,7 @@ namespace UCP_PABD
                 }
             }
         }
+
 
         private void Hapus_Click(object sender, EventArgs e)
         {
@@ -149,14 +183,32 @@ namespace UCP_PABD
         private void RefreshPaketGrid()
         {
             string query = "SELECT * FROM Paket_TopUp";
-            using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            using (var connection = new SqlConnection(
+                   "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            using (var adapter = new SqlDataAdapter(query, connection))
             {
-                using (var adapter = new SqlDataAdapter(query, connection))
+                var dataTable = new DataTable();
+                adapter.Fill(dataTable);
+
+                EnsureIdGameColumn();          // ⬅️ panggil di sini
+                DGVTOPUUP.DataSource = dataTable;
+            }
+        }
+
+
+
+        private void EnsureIdGameColumn()
+        {
+            if (!DGVTOPUUP.Columns.Contains("ID_Game"))
+            {
+                var col = new DataGridViewTextBoxColumn
                 {
-                    var dataTable = new DataTable();
-                    adapter.Fill(dataTable);
-                    DGVTOPUUP.DataSource = dataTable;
-                }
+                    Name = "ID_Game",
+                    HeaderText = "ID Game",
+                    DataPropertyName = "ID_Game",
+                    ReadOnly = true
+                };
+                DGVTOPUUP.Columns.Add(col);
             }
         }
         private void Top_UP_Load(object sender, EventArgs e)
@@ -202,5 +254,7 @@ namespace UCP_PABD
            
             this.Close();
         }
+      
+     
     }
 }
