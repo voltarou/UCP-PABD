@@ -16,6 +16,7 @@ namespace UCP_PABD
         public Game()
         {
             InitializeComponent();
+            this.Load += Game_Load;
         }
 
         private void Tambah_Click(object sender, EventArgs e)
@@ -183,7 +184,7 @@ namespace UCP_PABD
             this.Hide(); // Sembunyikan form login
 
             // Tampilkan form customer
-            FormCustomer fc = new FormCustomer();
+            All fc = new All();
             fc.ShowDialog();
 
             // Tutup form login setelah form customer ditutup
@@ -192,35 +193,28 @@ namespace UCP_PABD
 
         private void button1_Click(object sender, EventArgs e)
         {
-            this.Hide(); // Sembunyikan form login
+            var confirm = MessageBox.Show(
+                "Apakah Anda yakin ingin logout?",
+                "Konfirmasi Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
 
-            // Tampilkan form customer
-            Top_UP tu = new Top_UP();
-            tu.ShowDialog();
-
-            // Tutup form login setelah form customer ditutup
-            this.Close();
-        }
-
-        private void LoadGamesToComboBox()
-        {
-            string query = "SELECT ID_Game, NamaGame FROM Games";
-            using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            if (confirm == DialogResult.Yes)
             {
-                using (var adapter = new SqlDataAdapter(query, connection))
+                this.Hide();          // sembunyikan form sekarang
+                using (var l = new Login())   // tampilkan form login
                 {
-                    DataTable dt = new DataTable();
-                    adapter.Fill(dt);
-                    CMBGAME.DataSource = dt;
-                    CMBGAME.DisplayMember = "NamaGame";
-                    CMBGAME.ValueMember = "ID_Game";
+                    l.ShowDialog();
                 }
+                this.Close();
             }
-        }
+         }
+
+        
 
         private void Game_Load(object sender, EventArgs e)
         {
-            LoadGamesToComboBox();
+           
             RefreshDataGridView(); // jika ingin langsung tampilkan data ke DataGridView juga
         }
 

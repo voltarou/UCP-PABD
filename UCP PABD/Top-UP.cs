@@ -16,6 +16,7 @@ namespace UCP_PABD
         public Top_UP()
         {
             InitializeComponent();
+            this.Load += Top_UP_Load;
         }
 
         private void NamaPaket_TextChanged(object sender, EventArgs e)
@@ -177,6 +178,8 @@ namespace UCP_PABD
                 DataGridViewRow row = DGVTOPUUP.Rows[e.RowIndex];
                 NamaPaket.Text = row.Cells["NamaPaket"].Value.ToString();
                 Hargaa.Text = row.Cells["Harga"].Value.ToString();
+
+                
             }
         }
 
@@ -192,6 +195,8 @@ namespace UCP_PABD
 
                 EnsureIdGameColumn();          // ⬅️ panggil di sini
                 DGVTOPUUP.DataSource = dataTable;
+
+
             }
         }
 
@@ -223,6 +228,8 @@ namespace UCP_PABD
                     CMB.DataSource = dt;
                     CMB.DisplayMember = "NamaGame";
                     CMB.ValueMember = "ID_Game";
+
+                    RefreshPaketGrid();
                 }
             }
         }
@@ -237,7 +244,7 @@ namespace UCP_PABD
             this.Hide(); // Sembunyikan FormCustomer
 
             // Tampilkan form Game
-            Game formGame = new Game();
+            All formGame = new All();
             formGame.ShowDialog(); // Tunggu hingga form Game ditutup
 
             this.Close(); // Tutup FormCustomer setelah form Game selesai
@@ -245,15 +252,22 @@ namespace UCP_PABD
 
         private void button2_Click(object sender, EventArgs e)
         {
-            this.Hide(); 
+            var confirm = MessageBox.Show(
+                 "Apakah Anda yakin ingin logout?",
+                 "Konfirmasi Logout",
+                 MessageBoxButtons.YesNo,
+                 MessageBoxIcon.Question);
 
-           
-            Metode_Pembayaran mp = new Metode_Pembayaran();
-            mp.ShowDialog();
-
-           
-            this.Close();
-        }
+            if (confirm == DialogResult.Yes)
+            {
+                this.Hide();          // sembunyikan form sekarang
+                using (var l = new Login())   // tampilkan form login
+                {
+                    l.ShowDialog();
+                }
+                this.Close();
+            }
+            }
       
      
     }

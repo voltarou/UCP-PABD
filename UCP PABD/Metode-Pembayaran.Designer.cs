@@ -127,7 +127,7 @@
             this.Next.Name = "Next";
             this.Next.Size = new System.Drawing.Size(75, 23);
             this.Next.TabIndex = 8;
-            this.Next.Text = "Next >>";
+            this.Next.Text = "Log Out";
             this.Next.UseVisualStyleBackColor = true;
             this.Next.Click += new System.EventHandler(this.Next_Click);
             // 

@@ -163,6 +163,16 @@ namespace UCP_PABD.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Nyantai {
+            get {
+                object obj = ResourceManager.GetObject("Nyantai", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap purepng_com_playerunknowns_battlegrounds_logogameslogosplayerunknowns_battlegroundspubg_691522709260kl7uy {
             get {
                 object obj = ResourceManager.GetObject("purepng.com-playerunknowns-battlegrounds-logogameslogosplayerunknowns-battlegroun" +

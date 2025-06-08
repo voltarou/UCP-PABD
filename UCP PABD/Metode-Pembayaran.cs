@@ -49,11 +49,32 @@ namespace UCP_PABD
 
         private void Tambah_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(Metode.Text))
+            string metodeValue = Metode.Text.Trim();
+            if (string.IsNullOrWhiteSpace(metodeValue))
             {
                 MessageBox.Show("Metode wajib diisi");
                 return;
             }
+            if (System.Text.RegularExpressions.Regex.IsMatch(metodeValue, @"\d"))
+            {
+                MessageBox.Show("Metode tidak boleh mengandung angka");
+                return;
+            }
+
+            using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Sistem_Pembayaran WHERE Metode = @Metode", _conn))
+            {
+                cmd.Parameters.AddWithValue("@Metode", metodeValue);
+                _conn.Open();
+                int count = (int)cmd.ExecuteScalar();
+                _conn.Close();
+
+                if (count > 0)
+                {
+                    MessageBox.Show("Metode sudah ada, tidak boleh duplikat");
+                    return;
+                }
+            }
+
 
             using (SqlCommand cmd = new SqlCommand("INSERT INTO Sistem_Pembayaran (Metode) VALUES (@Metode)", _conn))
             {
@@ -74,6 +95,34 @@ namespace UCP_PABD
                 MessageBox.Show("Pilih data yang akan diedit");
                 return;
             }
+
+            string metodeValue = Metode.Text.Trim();
+            if (string.IsNullOrWhiteSpace(metodeValue))
+            {
+                MessageBox.Show("Metode wajib diisi");
+                return;
+            }
+            if (System.Text.RegularExpressions.Regex.IsMatch(metodeValue, @"\d"))
+            {
+                MessageBox.Show("Metode tidak boleh mengandung angka");
+                return;
+            }
+
+            using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Sistem_Pembayaran WHERE Metode = @Metode", _conn))
+            {
+                cmd.Parameters.AddWithValue("@Metode", metodeValue);
+                _conn.Open();
+                int count = (int)cmd.ExecuteScalar();
+                _conn.Close();
+
+                if (count > 0)
+                {
+                    MessageBox.Show("Metode sudah ada, tidak boleh duplikat");
+                    return;
+                }
+            }
+
+
 
             using (SqlCommand cmd = new SqlCommand("UPDATE Sistem_Pembayaran SET Metode=@Metode WHERE ID_Pembayaran=@ID", _conn))
             {
@@ -127,7 +176,7 @@ namespace UCP_PABD
             this.Hide(); // Sembunyikan form login
 
             // Tampilkan form customer
-            Top_UP tu = new Top_UP();
+            All tu = new All();
             tu.ShowDialog();
 
             // Tutup form login setelah form customer ditutup
@@ -136,14 +185,21 @@ namespace UCP_PABD
 
         private void Next_Click(object sender, EventArgs e)
         {
-            this.Hide(); // Sembunyikan form login
+            var confirm = MessageBox.Show(
+                "Apakah Anda yakin ingin logout?",
+                "Konfirmasi Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
 
-            // Tampilkan form customer
-            Transaksi t = new Transaksi();
-            t.ShowDialog();
-
-            // Tutup form login setelah form customer ditutup
-            this.Close();
-        }
+            if (confirm == DialogResult.Yes)
+            {
+                this.Hide();          // sembunyikan form sekarang
+                using (var l = new Login())   // tampilkan form login
+                {
+                    l.ShowDialog();
+                }
+                this.Close();
+            }
+            }
     }
 }

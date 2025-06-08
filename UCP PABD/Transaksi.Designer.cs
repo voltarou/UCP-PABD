@@ -41,6 +41,10 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
+            this.Export = new System.Windows.Forms.Button();
+            this.CmbCust = new System.Windows.Forms.ComboBox();
+            this.CmbGame = new System.Windows.Forms.ComboBox();
+            this.CmbPembayaran = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.DGVTransaksi)).BeginInit();
             this.SuspendLayout();
@@ -84,7 +88,7 @@
             this.Idcust.Name = "Idcust";
             this.Idcust.Size = new System.Drawing.Size(100, 22);
             this.Idcust.TabIndex = 4;
-            
+            this.Idcust.TextChanged += new System.EventHandler(this.Idcust_TextChanged);
             // 
             // button2
             // 
@@ -98,7 +102,7 @@
             // 
             // Edit
             // 
-            this.Edit.Location = new System.Drawing.Point(1161, 127);
+            this.Edit.Location = new System.Drawing.Point(1161, 100);
             this.Edit.Name = "Edit";
             this.Edit.Size = new System.Drawing.Size(150, 23);
             this.Edit.TabIndex = 7;
@@ -108,7 +112,7 @@
             // 
             // Tambah
             // 
-            this.Tambah.Location = new System.Drawing.Point(1161, 82);
+            this.Tambah.Location = new System.Drawing.Point(1161, 57);
             this.Tambah.Name = "Tambah";
             this.Tambah.Size = new System.Drawing.Size(150, 23);
             this.Tambah.TabIndex = 8;
@@ -134,7 +138,7 @@
             // 
             // Hapus
             // 
-            this.Hapus.Location = new System.Drawing.Point(1161, 177);
+            this.Hapus.Location = new System.Drawing.Point(1161, 140);
             this.Hapus.Name = "Hapus";
             this.Hapus.Size = new System.Drawing.Size(150, 23);
             this.Hapus.TabIndex = 13;
@@ -169,11 +173,52 @@
             this.label2.TabIndex = 16;
             this.label2.Text = "ID_PAKET";
             // 
+            // Export
+            // 
+            this.Export.Location = new System.Drawing.Point(1161, 181);
+            this.Export.Name = "Export";
+            this.Export.Size = new System.Drawing.Size(150, 23);
+            this.Export.TabIndex = 17;
+            this.Export.Text = "Export Data";
+            this.Export.UseVisualStyleBackColor = true;
+            this.Export.Click += new System.EventHandler(this.Export_Click);
+            // 
+            // CmbCust
+            // 
+            this.CmbCust.FormattingEnabled = true;
+            this.CmbCust.Location = new System.Drawing.Point(359, 79);
+            this.CmbCust.Name = "CmbCust";
+            this.CmbCust.Size = new System.Drawing.Size(121, 24);
+            this.CmbCust.TabIndex = 18;
+            this.CmbCust.SelectedIndexChanged += new System.EventHandler(this.CmbCust_SelectedIndexChanged);
+            // 
+            // CmbGame
+            // 
+            this.CmbGame.FormattingEnabled = true;
+            this.CmbGame.Location = new System.Drawing.Point(359, 132);
+            this.CmbGame.Name = "CmbGame";
+            this.CmbGame.Size = new System.Drawing.Size(121, 24);
+            this.CmbGame.TabIndex = 19;
+            this.CmbGame.SelectedIndexChanged += new System.EventHandler(this.CmbGame_SelectedIndexChanged);
+            // 
+            // CmbPembayaran
+            // 
+            this.CmbPembayaran.FormattingEnabled = true;
+            this.CmbPembayaran.Location = new System.Drawing.Point(359, 176);
+            this.CmbPembayaran.Name = "CmbPembayaran";
+            this.CmbPembayaran.Size = new System.Drawing.Size(121, 24);
+            this.CmbPembayaran.TabIndex = 20;
+            this.CmbPembayaran.SelectedIndexChanged += new System.EventHandler(this.CmbPembayaran_SelectedIndexChanged);
+            // 
             // Transaksi
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1389, 689);
+            this.Controls.Add(this.CmbPembayaran);
+            this.Controls.Add(this.CmbGame);
+            this.Controls.Add(this.CmbCust);
+            this.Controls.Add(this.Export);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.label4);
@@ -211,5 +256,9 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button Export;
+        private System.Windows.Forms.ComboBox CmbCust;
+        private System.Windows.Forms.ComboBox CmbGame;
+        private System.Windows.Forms.ComboBox CmbPembayaran;
     }
 }

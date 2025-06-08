@@ -42,7 +42,8 @@ namespace UCP_PABD
         {
             string username = txtUsername.Text.Trim();
             string password = txtPassword.Text;
-
+            txtPassword.UseSystemPasswordChar = true;
+            txtPassword.UseSystemPasswordChar = true;
             // Validasi panjang password
             if (password.Length <= 8)
             {
@@ -72,7 +73,7 @@ namespace UCP_PABD
                             MessageBox.Show("Login berhasil!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             this.Hide();
 
-                            FormCustomer fc = new FormCustomer();
+                            All fc = new All();
                             fc.ShowDialog();
 
                             this.Close();
@@ -90,6 +91,17 @@ namespace UCP_PABD
             }
         }
 
+        private bool passwordShown = false;
+
+
+        private void Hide_Click(object sender, EventArgs e)
+        {
+            passwordShown = !passwordShown;
+            txtPassword.UseSystemPasswordChar = !passwordShown;
+
+            // Optional: Ubah teks tombol sesuai kondisi
+            Hide.Text = passwordShown ? "Show" : "Hide";
+        }
     }
 }
 

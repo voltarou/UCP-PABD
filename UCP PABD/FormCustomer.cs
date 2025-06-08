@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace UCP_PABD
@@ -12,7 +13,6 @@ namespace UCP_PABD
         private TextBox txtNama;
         private TextBox txtEmail;
         private TextBox txtNoHP;
-        private ComboBox cmbGame;
         private Button btnTambahCustomer;
         private PictureBox pictureBox1;
         private Label label1;
@@ -21,11 +21,13 @@ namespace UCP_PABD
         private Button Hapus;
         private Button Edit;
         private Button Next;
+        private Button Prev;
         private readonly string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;";
 
         public FormCustomer()
         {
             InitializeComponent();
+            this.Load += FormCustomer_Load;
         }
 
         private void FormCustomer_Load(object sender, EventArgs e)
@@ -66,9 +68,7 @@ namespace UCP_PABD
                     SqlDataReader reader = cmd.ExecuteReader();
                     DataTable dt = new DataTable();
                     dt.Load(reader);
-                    cmbGame.DataSource = dt;
-                    cmbGame.DisplayMember = "NamaGame";
-                    cmbGame.ValueMember = "ID_Game";
+                    
                 }
                 catch (Exception ex)
                 {
@@ -79,12 +79,39 @@ namespace UCP_PABD
 
         private void btnTambahCustomer_Click(object sender, EventArgs e)
         {
+            // Validasi inputan dari user
             if (txtNama.Text.Trim() == "" || txtEmail.Text.Trim() == "" || txtNoHP.Text.Trim() == "")
             {
                 MessageBox.Show("Semua field wajib diisi!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
+            if (!txtEmail.Text.Contains("@"))
+            {
+                MessageBox.Show("Email harus mengandung karakter '@'.", "Validasi Email", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!txtNoHP.Text.All(char.IsDigit))
+            {
+                MessageBox.Show("No HP hanya boleh berisi angka.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (txtNoHP.Text.Length < 10 || txtNoHP.Text.Length > 14)
+            {
+                MessageBox.Show("No HP harus memiliki panjang antara 10 sampai 14 karakter.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validasi No HP harus mulai dengan '08'
+            if (!txtNoHP.Text.StartsWith("08"))
+            {
+                MessageBox.Show("No HP harus dimulai dengan '08'.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Jika semua validasi lolos, baru lakukan koneksi dan eksekusi query
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
@@ -125,7 +152,6 @@ namespace UCP_PABD
             this.txtNama = new System.Windows.Forms.TextBox();
             this.txtEmail = new System.Windows.Forms.TextBox();
             this.txtNoHP = new System.Windows.Forms.TextBox();
-            this.cmbGame = new System.Windows.Forms.ComboBox();
             this.btnTambahCustomer = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -134,6 +160,7 @@ namespace UCP_PABD
             this.Edit = new System.Windows.Forms.Button();
             this.Next = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.Prev = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCustomer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -172,15 +199,6 @@ namespace UCP_PABD
             this.txtNoHP.Size = new System.Drawing.Size(193, 22);
             this.txtNoHP.TabIndex = 3;
             this.txtNoHP.TextChanged += new System.EventHandler(this.txtNoHP_TextChanged);
-            // 
-            // cmbGame
-            // 
-            this.cmbGame.FormattingEnabled = true;
-            this.cmbGame.Location = new System.Drawing.Point(1103, 62);
-            this.cmbGame.Name = "cmbGame";
-            this.cmbGame.Size = new System.Drawing.Size(121, 24);
-            this.cmbGame.TabIndex = 4;
-            this.cmbGame.SelectedIndexChanged += new System.EventHandler(this.cmbGame_SelectedIndexChanged);
             // 
             // btnTambahCustomer
             // 
@@ -245,7 +263,7 @@ namespace UCP_PABD
             this.Next.Name = "Next";
             this.Next.Size = new System.Drawing.Size(75, 23);
             this.Next.TabIndex = 12;
-            this.Next.Text = "Next >>";
+            this.Next.Text = "Log Out";
             this.Next.UseVisualStyleBackColor = true;
             this.Next.Click += new System.EventHandler(this.Next_Click);
             // 
@@ -260,9 +278,20 @@ namespace UCP_PABD
             this.pictureBox1.TabIndex = 6;
             this.pictureBox1.TabStop = false;
             // 
+            // Prev
+            // 
+            this.Prev.Location = new System.Drawing.Point(16, 625);
+            this.Prev.Name = "Prev";
+            this.Prev.Size = new System.Drawing.Size(75, 23);
+            this.Prev.TabIndex = 13;
+            this.Prev.Text = "<< Prev";
+            this.Prev.UseVisualStyleBackColor = true;
+            this.Prev.Click += new System.EventHandler(this.Prev_Click);
+            // 
             // FormCustomer
             // 
             this.ClientSize = new System.Drawing.Size(1322, 671);
+            this.Controls.Add(this.Prev);
             this.Controls.Add(this.Next);
             this.Controls.Add(this.Edit);
             this.Controls.Add(this.Hapus);
@@ -270,7 +299,6 @@ namespace UCP_PABD
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btnTambahCustomer);
-            this.Controls.Add(this.cmbGame);
             this.Controls.Add(this.txtNoHP);
             this.Controls.Add(this.txtEmail);
             this.Controls.Add(this.txtNama);
@@ -313,6 +341,31 @@ namespace UCP_PABD
             if (txtNama.Text.Trim() == "" || txtEmail.Text.Trim() == "" || txtNoHP.Text.Trim() == "")
             {
                 MessageBox.Show("Semua field wajib diisi!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!txtEmail.Text.Contains("@"))
+            {
+                MessageBox.Show("Email harus mengandung karakter '@'.", "Validasi Email", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!txtNoHP.Text.All(char.IsDigit))
+            {
+                MessageBox.Show("No HP hanya boleh berisi angka.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (txtNoHP.Text.Length < 10 || txtNoHP.Text.Length > 14)
+            {
+                MessageBox.Show("No HP harus memiliki panjang antara 10 sampai 14 karakter.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validasi No HP harus mulai dengan '08'
+            if (!txtNoHP.Text.StartsWith("08"))
+            {
+                MessageBox.Show("No HP harus dimulai dengan '08'.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -384,18 +437,36 @@ namespace UCP_PABD
 
         private void Next_Click(object sender, EventArgs e)
         {
-            this.Hide(); // Sembunyikan FormCustomer
+            var confirm = MessageBox.Show(
+               "Apakah Anda yakin ingin logout?",
+               "Konfirmasi Logout",
+               MessageBoxButtons.YesNo,
+               MessageBoxIcon.Question);
 
-            // Tampilkan form Game
-            Game formGame = new Game();
-            formGame.ShowDialog(); // Tunggu hingga form Game ditutup
+            if (confirm == DialogResult.Yes)
+            {
+                this.Hide();          // sembunyikan form sekarang
+                using (var l = new Login())   // tampilkan form login
+                {
+                    l.ShowDialog();
+                }
+                this.Close();
+            }
 
-            this.Close(); // Tutup FormCustomer setelah form Game selesai
         }
 
+        private void Prev_Click(object sender, EventArgs e)
+        {
+           
+                this.Hide(); // Sembunyikan form login
 
+                // Tampilkan form customer
+                All fc = new All();
+                fc.ShowDialog();
 
-
-
+                // Tutup form login setelah form customer ditutup
+                this.Close();
+            
+        }
     }
 }
