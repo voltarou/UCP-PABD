@@ -19,23 +19,22 @@ namespace UCP_PABD
 {
     public partial class Transaksi : Form
     {
+        private string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;";
+
         public Transaksi()
         {
             InitializeComponent();
             this.Load += Transaksi_Load;
             LoadComboBoxData();
-            // Aktifkan MultiSelect pada DataGridView Anda di properti designer atau di sini
             DGVTransaksi.MultiSelect = true;
-            DGVTransaksi.SelectionMode = DataGridViewSelectionMode.FullRowSelect; // Pastikan mode seleksi adalah seluruh baris
+            DGVTransaksi.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
 
         private void Prev_Click(object sender, EventArgs e)
         {
             this.Hide();
-
             All mp = new All();
             mp.ShowDialog();
-
             this.Close();
         }
 
@@ -49,12 +48,12 @@ namespace UCP_PABD
 
             if (confirm == DialogResult.Yes)
             {
-                this.Hide();        // sembunyikan form sekarang
-                using (var l = new Login())   // tampilkan form login
+                this.Hide();
+                using (var l = new Login())
                 {
                     l.ShowDialog();
                 }
-                this.Close();       // tutup form setelah login ditutup
+                this.Close();
             }
         }
 
@@ -69,7 +68,6 @@ namespace UCP_PABD
                 bool isEmpty = false;
                 bool isInvalid = false;
 
-                // Cek ID_Customer
                 if (row["ID_Customer"] == DBNull.Value)
                 {
                     isEmpty = true;
@@ -79,7 +77,6 @@ namespace UCP_PABD
                     isInvalid = true;
                 }
 
-                // Cek ID_Paket
                 if (row["ID_Paket"] == DBNull.Value)
                 {
                     isEmpty = true;
@@ -89,7 +86,6 @@ namespace UCP_PABD
                     isInvalid = true;
                 }
 
-                // Cek ID_Pembayaran
                 if (row["ID_Pembayaran"] == DBNull.Value)
                 {
                     isEmpty = true;
@@ -99,7 +95,6 @@ namespace UCP_PABD
                     isInvalid = true;
                 }
 
-                // Tentukan status berdasar pengecekan
                 if (isEmpty)
                 {
                     row["Status"] = "Pending";
@@ -117,17 +112,26 @@ namespace UCP_PABD
             DGVTransaksi.DataSource = dt;
         }
 
-        // Execute query and return DataTable
         private System.Data.DataTable ExecuteQuery(string query)
         {
             System.Data.DataTable dt = new System.Data.DataTable();
 
-            string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"; // Updated connection string
             using (SqlConnection con = new SqlConnection(connectionString))
             {
-                con.Open();
-                SqlDataAdapter da = new SqlDataAdapter(query, con);
-                da.Fill(dt);
+                try
+                {
+                    con.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(query, con);
+                    da.Fill(dt);
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show("Error database saat mengambil data: " + ex.Message, "Error Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Terjadi kesalahan: " + ex.Message, "Error Umum", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             return dt;
         }
@@ -142,7 +146,6 @@ namespace UCP_PABD
             bool isEmpty = false;
             bool isInvalid = false;
 
-            // Validasi ID Customer
             if (!string.IsNullOrWhiteSpace(Idcust.Text) && int.TryParse(Idcust.Text, out int custId))
             {
                 if (ValidateID(custId, "Customer")) idCustomer = custId;
@@ -153,7 +156,6 @@ namespace UCP_PABD
                 isEmpty = true;
             }
 
-            // Validasi ID Paket
             if (!string.IsNullOrWhiteSpace(Idpaket.Text) && int.TryParse(Idpaket.Text, out int paketId))
             {
                 if (ValidateID(paketId, "Paket_TopUp")) idPaket = paketId;
@@ -164,7 +166,6 @@ namespace UCP_PABD
                 isEmpty = true;
             }
 
-            // Validasi ID Pembayaran
             if (!string.IsNullOrWhiteSpace(Idpembayaran.Text) && int.TryParse(Idpembayaran.Text, out int bayarId))
             {
                 if (ValidateID(bayarId, "Sistem_Pembayaran")) idPembayaran = bayarId;
@@ -175,38 +176,50 @@ namespace UCP_PABD
                 isEmpty = true;
             }
 
-            // Tentukan status akhir
             if (isEmpty)
                 status = "Pending";
             else if (isInvalid)
                 status = "Gagal";
 
-            string query = "INSERT INTO Transaksi (ID_Customer, ID_Paket, ID_Pembayaran, Status) " +
-                            "VALUES (@ID_Customer, @ID_Paket, @ID_Pembayaran, @Status)";
-
-            using (SqlConnection con = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            using (SqlConnection con = new SqlConnection(connectionString))
             {
-                SqlCommand cmd = new SqlCommand(query, con);
-                cmd.Parameters.AddWithValue("@ID_Customer", idCustomer);
-                cmd.Parameters.AddWithValue("@ID_Paket", idPaket);
-                cmd.Parameters.AddWithValue("@ID_Pembayaran", idPembayaran);
-                cmd.Parameters.AddWithValue("@Status", status);
-
                 con.Open();
-                cmd.ExecuteNonQuery();
-            }
+                SqlTransaction transaction = con.BeginTransaction(); // Memulai transaksi
 
-            MessageBox.Show("Transaksi berhasil ditambahkan dengan status: " + status, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LoadTransaksiData();
-            ClearFields(); // Panggil fungsi untuk membersihkan field setelah menambah data
+                try
+                {
+                    SqlCommand cmd = new SqlCommand("sp_InsertTransaksi", con, transaction); // Menggunakan stored procedure
+                    cmd.CommandType = CommandType.StoredProcedure; // Mengatur CommandType menjadi StoredProcedure
+
+                    cmd.Parameters.AddWithValue("@ID_Customer", idCustomer);
+                    cmd.Parameters.AddWithValue("@ID_Paket", idPaket);
+                    cmd.Parameters.AddWithValue("@ID_Pembayaran", idPembayaran);
+                    cmd.Parameters.AddWithValue("@Status", status);
+
+                    cmd.ExecuteNonQuery();
+                    transaction.Commit(); // Commit transaksi jika berhasil
+
+                    MessageBox.Show("Transaksi berhasil ditambahkan dengan status: " + status, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadTransaksiData();
+                    ClearFields();
+                }
+                catch (SqlException ex)
+                {
+                    transaction.Rollback(); // Rollback transaksi jika terjadi error SQL
+                    MessageBox.Show("Gagal menambahkan transaksi (SQL Error): " + ex.Message, "Error Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback(); // Rollback transaksi jika terjadi error umum
+                    MessageBox.Show("Gagal menambahkan transaksi (General Error): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
-        // Validate if the ID exists in the respective table
         private bool ValidateID(int id, string tableName)
         {
             string columnName = string.Empty;
 
-            // Set the correct column name based on the table
             switch (tableName)
             {
                 case "Customer":
@@ -219,23 +232,34 @@ namespace UCP_PABD
                     columnName = "ID_Pembayaran";
                     break;
                 default:
-                    return false; // Invalid table name
+                    return false;
             }
 
             string query = $"SELECT COUNT(*) FROM {tableName} WHERE {columnName} = @ID";
 
-            using (SqlConnection con = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            using (SqlConnection con = new SqlConnection(connectionString))
             {
-                SqlCommand cmd = new SqlCommand(query, con);
-                cmd.Parameters.AddWithValue("@ID", id);
-                con.Open();
-                int count = (int)cmd.ExecuteScalar();
-                return count > 0; // Return true if the ID exists, false otherwise
+                try
+                {
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    con.Open();
+                    int count = (int)cmd.ExecuteScalar();
+                    return count > 0;
+                }
+                catch (SqlException ex)
+                {
+                    MessageBox.Show($"Error saat memvalidasi ID di tabel {tableName}: " + ex.Message, "Error Validasi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Terjadi kesalahan saat memvalidasi ID: " + ex.Message, "Error Umum", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
             }
         }
 
-
-        // Edit an existing transaction (Edit_Click)
         private void Edit_Click(object sender, EventArgs e)
         {
             if (DGVTransaksi.SelectedRows.Count > 0)
@@ -251,7 +275,6 @@ namespace UCP_PABD
 
                 if (!string.IsNullOrWhiteSpace(Idcust.Text))
                 {
-                    // Pastikan input adalah angka sebelum parsing
                     if (int.TryParse(Idcust.Text, out int parsedIdCust))
                     {
                         idCustomer = parsedIdCust;
@@ -260,7 +283,7 @@ namespace UCP_PABD
                     else
                     {
                         MessageBox.Show("ID Customer harus berupa angka.", "Error Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return; // Hentikan proses edit jika input tidak valid
+                        return;
                     }
                 }
                 else
@@ -270,7 +293,6 @@ namespace UCP_PABD
 
                 if (!string.IsNullOrWhiteSpace(Idpaket.Text))
                 {
-                    // Pastikan input adalah angka sebelum parsing
                     if (int.TryParse(Idpaket.Text, out int parsedIdPaket))
                     {
                         idPaket = parsedIdPaket;
@@ -279,7 +301,7 @@ namespace UCP_PABD
                     else
                     {
                         MessageBox.Show("ID Paket harus berupa angka.", "Error Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return; // Hentikan proses edit jika input tidak valid
+                        return;
                     }
                 }
                 else
@@ -289,7 +311,6 @@ namespace UCP_PABD
 
                 if (!string.IsNullOrWhiteSpace(Idpembayaran.Text))
                 {
-                    // Pastikan input adalah angka sebelum parsing
                     if (int.TryParse(Idpembayaran.Text, out int parsedIdPembayaran))
                     {
                         idPembayaran = parsedIdPembayaran;
@@ -298,7 +319,7 @@ namespace UCP_PABD
                     else
                     {
                         MessageBox.Show("ID Pembayaran harus berupa angka.", "Error Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return; // Hentikan proses edit jika input tidak valid
+                        return;
                     }
                 }
                 else
@@ -306,11 +327,9 @@ namespace UCP_PABD
                     isEmpty = true;
                 }
 
-                // Tentukan status akhir
                 if (isEmpty) status = "Pending";
                 else if (isInvalid) status = "Gagal";
 
-                // Tindakan khusus berdasarkan status
                 if (status == "Pending")
                 {
                     MessageBox.Show("Data masih ada yang kosong. Status akan di-set menjadi Pending.", "Status Pending", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -324,25 +343,40 @@ namespace UCP_PABD
                     MessageBox.Show("Data valid. Status di-set menjadi Sukses.", "Status Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                // Update ke database
-                string query = "UPDATE Transaksi SET ID_Customer = @ID_Customer, ID_Paket = @ID_Paket, " +
-                               "ID_Pembayaran = @ID_Pembayaran, Status = @Status WHERE ID_Transaksi = @ID_Transaksi";
-
-                using (SqlConnection con = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    SqlCommand cmd = new SqlCommand(query, con);
-                    cmd.Parameters.AddWithValue("@ID_Customer", idCustomer);
-                    cmd.Parameters.AddWithValue("@ID_Paket", idPaket);
-                    cmd.Parameters.AddWithValue("@ID_Pembayaran", idPembayaran);
-                    cmd.Parameters.AddWithValue("@Status", status);
-                    cmd.Parameters.AddWithValue("@ID_Transaksi", idTransaksi);
-
                     con.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                    SqlTransaction transaction = con.BeginTransaction(); // Memulai transaksi
 
-                LoadTransaksiData();
-                ClearFields(); // Panggil fungsi untuk membersihkan field setelah mengedit data
+                    try
+                    {
+                        SqlCommand cmd = new SqlCommand("sp_UpdateTransaksi", con, transaction); // Menggunakan stored procedure
+                        cmd.CommandType = CommandType.StoredProcedure; // Mengatur CommandType menjadi StoredProcedure
+
+                        cmd.Parameters.AddWithValue("@ID_Transaksi", idTransaksi);
+                        cmd.Parameters.AddWithValue("@ID_Customer", idCustomer);
+                        cmd.Parameters.AddWithValue("@ID_Paket", idPaket);
+                        cmd.Parameters.AddWithValue("@ID_Pembayaran", idPembayaran);
+                        cmd.Parameters.AddWithValue("@Status", status);
+
+                        cmd.ExecuteNonQuery();
+                        transaction.Commit(); // Commit transaksi jika berhasil
+
+                        MessageBox.Show("Transaksi berhasil diperbarui!", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadTransaksiData();
+                        ClearFields();
+                    }
+                    catch (SqlException ex)
+                    {
+                        transaction.Rollback(); // Rollback transaksi jika terjadi error SQL
+                        MessageBox.Show("Gagal memperbarui transaksi (SQL Error): " + ex.Message, "Error Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback(); // Rollback transaksi jika terjadi error umum
+                        MessageBox.Show("Gagal memperbarui transaksi (General Error): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
             }
             else
             {
@@ -350,11 +384,9 @@ namespace UCP_PABD
             }
         }
 
-
-        // Delete multiple selected transactions (Delete_Click)
         private void Delete_Click(object sender, EventArgs e)
         {
-            if (DGVTransaksi.SelectedRows.Count > 0) // Memastikan ada baris yang terpilih
+            if (DGVTransaksi.SelectedRows.Count > 0)
             {
                 DialogResult confirm;
                 if (DGVTransaksi.SelectedRows.Count > 1)
@@ -374,56 +406,54 @@ namespace UCP_PABD
                         MessageBoxIcon.Warning);
                 }
 
-
                 if (confirm == DialogResult.Yes)
                 {
-                    using (SqlConnection con = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+                    using (SqlConnection con = new SqlConnection(connectionString))
                     {
                         con.Open();
-                        SqlTransaction transaction = con.BeginTransaction(); // Mulai transaksi
+                        SqlTransaction transaction = con.BeginTransaction(); // Memulai transaksi
 
                         try
                         {
                             foreach (DataGridViewRow row in DGVTransaksi.SelectedRows)
                             {
-                                // Pastikan baris bukan baris kosong "New Row"
                                 if (!row.IsNewRow)
                                 {
                                     int idTransaksi = Convert.ToInt32(row.Cells["ID_Transaksi"].Value);
 
-                                    // Query SQL untuk menghapus data
-                                    string query = "DELETE FROM Transaksi WHERE ID_Transaksi = @ID_Transaksi";
-
-                                    SqlCommand cmd = new SqlCommand(query, con, transaction); // Gunakan transaksi
-                                    cmd.Parameters.AddWithValue("@ID_Transaksi", idTransaksi); // Menambahkan parameter ID_Transaksi
-                                    cmd.ExecuteNonQuery(); // Menjalankan perintah DELETE
+                                    SqlCommand cmd = new SqlCommand("sp_DeleteTransaksi", con, transaction); // Menggunakan stored procedure
+                                    cmd.CommandType = CommandType.StoredProcedure; // Mengatur CommandType menjadi StoredProcedure
+                                    cmd.Parameters.AddWithValue("@ID_Transaksi", idTransaksi);
+                                    cmd.ExecuteNonQuery();
                                 }
                             }
-                            transaction.Commit(); // Komit transaksi jika semua berhasil
+                            transaction.Commit(); // Commit transaksi jika berhasil
                             MessageBox.Show($"{DGVTransaksi.SelectedRows.Count} transaksi berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        catch (SqlException ex)
+                        {
+                            transaction.Rollback(); // Rollback transaksi jika terjadi error SQL
+                            MessageBox.Show("Gagal menghapus transaksi (SQL Error): " + ex.Message, "Error Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                         catch (Exception ex)
                         {
-                            transaction.Rollback(); // Rollback transaksi jika ada kesalahan
-                            MessageBox.Show("Gagal menghapus transaksi: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            transaction.Rollback(); // Rollback transaksi jika terjadi error umum
+                            MessageBox.Show("Gagal menghapus transaksi (General Error): " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
 
-                    LoadTransaksiData(); // Memuat ulang data untuk menampilkan perubahan
-                    ClearFields(); // Membersihkan bidang input setelah penghapusan
+                    LoadTransaksiData();
+                    ClearFields();
                 }
             }
             else
             {
-                // Memberi tahu pengguna jika tidak ada baris yang dipilih
                 MessageBox.Show("Silakan pilih transaksi yang akan dihapus.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        // Handle DataGridView row click to load selected transaction data for editing
         private void DGVTransaksi_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = DGVTransaksi.Rows[e.RowIndex];
@@ -433,33 +463,26 @@ namespace UCP_PABD
             }
         }
 
-        // Form load event, load data into the DataGridView
         private void Transaksi_Load(object sender, EventArgs e)
         {
             LoadTransaksiData();
         }
 
-        // Event handler for Idpembayaran TextChanged
         private void Idpembayaran_TextChanged(object sender, EventArgs e)
         {
-            // Add logic to handle text changes if necessary
         }
 
-        // Event handler for Idpaket TextChanged
         private void Idpaket_TextChanged(object sender, EventArgs e)
         {
-            // Add logic to handle text changes if necessary
         }
 
-        // Event handler for Hapus (Delete) button click
         private void Hapus_Click(object sender, EventArgs e)
         {
-            Delete_Click(sender, e); // Call the Delete_Click method
+            Delete_Click(sender, e);
         }
 
         private void Idcust_TextChanged(object sender, EventArgs e)
         {
-
         }
 
         private void ExportToExcel(DataGridView dgv, string filePath)
@@ -474,13 +497,11 @@ namespace UCP_PABD
                 workbook = excelApp.Workbooks.Add(Type.Missing);
                 worksheet = (Excel.Worksheet)workbook.Sheets[1];
 
-                // Tulis header kolom
                 for (int i = 0; i < dgv.Columns.Count; i++)
                 {
                     worksheet.Cells[1, i + 1] = dgv.Columns[i].HeaderText;
                 }
 
-                // Tulis hanya baris yang terseleksi
                 int rowIndex = 2;
                 foreach (DataGridViewRow row in dgv.SelectedRows)
                 {
@@ -519,39 +540,50 @@ namespace UCP_PABD
             }
         }
 
-
         private void ExportToPdf(DataGridView dgv, string filePath)
         {
-            Document pdfDoc = new Document(PageSize.A4, 10, 10, 10, 10);
-            PdfWriter.GetInstance(pdfDoc, new FileStream(filePath, FileMode.Create));
-            pdfDoc.Open();
-
-            PdfPTable table = new PdfPTable(dgv.Columns.Count);
-
-            // Header kolom
-            foreach (DataGridViewColumn column in dgv.Columns)
+            try
             {
-                table.AddCell(new Phrase(column.HeaderText));
-            }
+                Document pdfDoc = new Document(PageSize.A4, 10, 10, 10, 10);
+                PdfWriter.GetInstance(pdfDoc, new FileStream(filePath, FileMode.Create));
+                pdfDoc.Open();
 
-            // Data baris hanya dari SelectedRows
-            foreach (DataGridViewRow row in dgv.SelectedRows)
-            {
-                if (!row.IsNewRow)
+                PdfPTable table = new PdfPTable(dgv.Columns.Count);
+                table.WidthPercentage = 100; // Mengatur lebar tabel agar memenuhi halaman
+
+                // Menambahkan header tabel
+                foreach (DataGridViewColumn column in dgv.Columns)
                 {
-                    foreach (DataGridViewCell cell in row.Cells)
+                    PdfPCell headerCell = new PdfPCell(new Phrase(column.HeaderText, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8)));
+                    headerCell.BackgroundColor = BaseColor.LIGHT_GRAY;
+                    headerCell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    table.AddCell(headerCell);
+                }
+
+                // Menambahkan data baris
+                foreach (DataGridViewRow row in dgv.SelectedRows)
+                {
+                    if (!row.IsNewRow)
                     {
-                        table.AddCell(new Phrase(cell.Value?.ToString() ?? ""));
+                        foreach (DataGridViewCell cell in row.Cells)
+                        {
+                            PdfPCell dataCell = new PdfPCell(new Phrase(cell.Value?.ToString() ?? "", FontFactory.GetFont(FontFactory.HELVETICA, 8)));
+                            dataCell.HorizontalAlignment = Element.ALIGN_LEFT;
+                            table.AddCell(dataCell);
+                        }
                     }
                 }
+
+                pdfDoc.Add(table);
+                pdfDoc.Close();
+
+                MessageBox.Show("Export ke PDF berhasil!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            pdfDoc.Add(table);
-            pdfDoc.Close();
-
-            MessageBox.Show("Export ke PDF berhasil!");
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal export ke PDF: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
-
 
         private void Export_Click(object sender, EventArgs e)
         {
@@ -577,56 +609,57 @@ namespace UCP_PABD
             }
         }
 
-
         private void LoadComboBoxData()
         {
-            string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;";
-
             using (SqlConnection con = new SqlConnection(connectionString))
             {
-                con.Open();
-
-                // Load Customer IDs
-                SqlCommand cmdCustomer = new SqlCommand("SELECT ID_Customer FROM Customer", con);
-                SqlDataReader readerCustomer = cmdCustomer.ExecuteReader();
-                CmbCust.Items.Clear(); // Bersihkan item lama sebelum menambahkan yang baru
-                while (readerCustomer.Read())
+                try
                 {
-                    CmbCust.Items.Add(readerCustomer["ID_Customer"].ToString());
-                }
-                readerCustomer.Close();
+                    con.Open();
 
-                // Load Paket IDs (ganti 'Games' jika ID Paket Anda ada di tabel lain)
-                SqlCommand cmdPaket = new SqlCommand("SELECT ID_Paket FROM Paket_TopUp", con); // Mengambil dari Paket_TopUp
-                SqlDataReader readerPaket = cmdPaket.ExecuteReader();
-                CmbGame.Items.Clear(); // Bersihkan item lama
-                while (readerPaket.Read())
-                {
-                    CmbGame.Items.Add(readerPaket["ID_Paket"].ToString());
-                }
-                readerPaket.Close();
+                    SqlCommand cmdCustomer = new SqlCommand("SELECT ID_Customer FROM Customer", con);
+                    SqlDataReader readerCustomer = cmdCustomer.ExecuteReader();
+                    CmbCust.Items.Clear();
+                    while (readerCustomer.Read())
+                    {
+                        CmbCust.Items.Add(readerCustomer["ID_Customer"].ToString());
+                    }
+                    readerCustomer.Close();
 
-                // Load Payment Method IDs
-                SqlCommand cmdPayment = new SqlCommand("SELECT ID_Pembayaran FROM Sistem_Pembayaran", con);
-                SqlDataReader readerPayment = cmdPayment.ExecuteReader();
-                CmbPembayaran.Items.Clear(); // Bersihkan item lama
-                while (readerPayment.Read())
-                {
-                    CmbPembayaran.Items.Add(readerPayment["ID_Pembayaran"].ToString());
+                    SqlCommand cmdPaket = new SqlCommand("SELECT ID_Paket FROM Paket_TopUp", con);
+                    SqlDataReader readerPaket = cmdPaket.ExecuteReader();
+                    CmbGame.Items.Clear();
+                    while (readerPaket.Read())
+                    {
+                        CmbGame.Items.Add(readerPaket["ID_Paket"].ToString());
+                    }
+                    readerPaket.Close();
+
+                    SqlCommand cmdPayment = new SqlCommand("SELECT ID_Pembayaran FROM Sistem_Pembayaran", con);
+                    SqlDataReader readerPayment = cmdPayment.ExecuteReader();
+                    CmbPembayaran.Items.Clear();
+                    while (readerPayment.Read())
+                    {
+                        CmbPembayaran.Items.Add(readerPayment["ID_Pembayaran"].ToString());
+                    }
+                    readerPayment.Close();
                 }
-                readerPayment.Close();
+                catch (SqlException ex)
+                {
+                    MessageBox.Show("Error saat memuat data ComboBox (SQL Error): " + ex.Message, "Error Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Terjadi kesalahan saat memuat data ComboBox: " + ex.Message, "Error Umum", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
         private void CmbCust_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Ketika item dipilih di cmbCust, Anda bisa memperbarui Idcust.Text jika masih membutuhkannya
-            // Namun, lebih disarankan untuk langsung menggunakan nilai dari CmbCust.SelectedItem di Tambah_Click atau Edit_Click
-            // jika Idcust adalah TextBox. Jika Idcust adalah nama properti ComboBox, maka tidak perlu baris ini.
             if (CmbCust.SelectedItem != null)
             {
-                // Contoh jika Anda masih ingin mengisi Idcust (TextBox) saat ComboBox dipilih
-                // Idcust.Text = CmbCust.SelectedItem.ToString();
+                Idcust.Text = CmbCust.SelectedItem.ToString(); // Mengisi Idcust.Text dengan nilai yang dipilih dari CmbCust
             }
         }
 
@@ -634,7 +667,7 @@ namespace UCP_PABD
         {
             if (CmbGame.SelectedItem != null)
             {
-                // Idpaket.Text = CmbGame.SelectedItem.ToString();
+                Idpaket.Text = CmbGame.SelectedItem.ToString(); // Mengisi Idpaket.Text dengan nilai yang dipilih dari CmbGame
             }
         }
 
@@ -642,22 +675,23 @@ namespace UCP_PABD
         {
             if (CmbPembayaran.SelectedItem != null)
             {
-                // Idpembayaran.Text = CmbPembayaran.SelectedItem.ToString();
+                Idpembayaran.Text = CmbPembayaran.SelectedItem.ToString(); // Mengisi Idpembayaran.Text dengan nilai yang dipilih dari CmbPembayaran
             }
         }
 
-        /// <summary>
-        /// Membersihkan semua field input (TextBoxes) pada form.
-        /// </summary>
         private void ClearFields()
         {
             Idcust.Text = "";
             Idpaket.Text = "";
             Idpembayaran.Text = "";
-            // Jika ada ComboBox yang perlu dibersihkan, tambahkan di sini
-            CmbCust.SelectedIndex = -1; // Menghapus pilihan yang sedang dipilih
+            CmbCust.SelectedIndex = -1;
             CmbGame.SelectedIndex = -1;
             CmbPembayaran.SelectedIndex = -1;
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            // Tidak ada logika yang perlu diubah di sini
         }
     }
 }

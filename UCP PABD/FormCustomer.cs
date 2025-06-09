@@ -79,7 +79,7 @@ namespace UCP_PABD
 
         private void btnTambahCustomer_Click(object sender, EventArgs e)
         {
-            // Validasi inputan dari user
+            // Validasi inputan dari user (tetap sama)
             if (txtNama.Text.Trim() == "" || txtEmail.Text.Trim() == "" || txtNoHP.Text.Trim() == "")
             {
                 MessageBox.Show("Semua field wajib diisi!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -104,36 +104,47 @@ namespace UCP_PABD
                 return;
             }
 
-            // Validasi No HP harus mulai dengan '08'
             if (!txtNoHP.Text.StartsWith("08"))
             {
                 MessageBox.Show("No HP harus dimulai dengan '08'.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Jika semua validasi lolos, baru lakukan koneksi dan eksekusi query
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
-                    string query = "INSERT INTO Customer (Nama, Email, No_HP) VALUES (@Nama, @Email, @No_HP)";
-                    SqlCommand cmd = new SqlCommand(query, conn);
+                    // Ganti INSERT INTO dengan pemanggilan Stored Procedure
+                    SqlCommand cmd = new SqlCommand("usp_InsertCustomer", conn);
+                    cmd.CommandType = CommandType.StoredProcedure; // Penting: Menentukan tipe command
+
                     cmd.Parameters.AddWithValue("@Nama", txtNama.Text.Trim());
                     cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
                     cmd.Parameters.AddWithValue("@No_HP", txtNoHP.Text.Trim());
 
-                    int result = cmd.ExecuteNonQuery();
-                    if (result > 0)
+                    // Untuk mengambil hasil dari Stored Procedure (ResultCode dan ResultMessage)
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
                     {
-                        MessageBox.Show("Customer berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoadCustomerData();
-                        ClearInputFields();
+                        int resultCode = Convert.ToInt32(reader["ResultCode"]);
+                        string resultMessage = reader["ResultMessage"].ToString();
+
+                        if (resultCode == 1)
+                        {
+                            MessageBox.Show(resultMessage, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadCustomerData();
+                            ClearInputFields();
+                        }
+                        else
+                        {
+                            MessageBox.Show(resultMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Gagal menambahkan customer:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Terjadi kesalahan saat menambahkan customer:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -338,6 +349,7 @@ namespace UCP_PABD
                 return;
             }
 
+            // Validasi inputan dari user (tetap sama)
             if (txtNama.Text.Trim() == "" || txtEmail.Text.Trim() == "" || txtNoHP.Text.Trim() == "")
             {
                 MessageBox.Show("Semua field wajib diisi!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -362,7 +374,6 @@ namespace UCP_PABD
                 return;
             }
 
-            // Validasi No HP harus mulai dengan '08'
             if (!txtNoHP.Text.StartsWith("08"))
             {
                 MessageBox.Show("No HP harus dimulai dengan '08'.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -374,25 +385,38 @@ namespace UCP_PABD
                 try
                 {
                     conn.Open();
-                    string query = "UPDATE Customer SET Nama = @Nama, Email = @Email, No_HP = @No_HP WHERE ID_Customer = @ID";
-                    SqlCommand cmd = new SqlCommand(query, conn);
+                    // Ganti UPDATE dengan pemanggilan Stored Procedure
+                    SqlCommand cmd = new SqlCommand("usp_UpdateCustomer", conn);
+                    cmd.CommandType = CommandType.StoredProcedure; // Penting: Menentukan tipe command
+
+                    cmd.Parameters.AddWithValue("@ID_Customer", selectedCustomerId); // Tambahkan parameter ID
                     cmd.Parameters.AddWithValue("@Nama", txtNama.Text.Trim());
                     cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
                     cmd.Parameters.AddWithValue("@No_HP", txtNoHP.Text.Trim());
-                    cmd.Parameters.AddWithValue("@ID", selectedCustomerId);
 
-                    int result = cmd.ExecuteNonQuery();
-                    if (result > 0)
+                    // Untuk mengambil hasil dari Stored Procedure (ResultCode dan ResultMessage)
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
                     {
-                        MessageBox.Show("Customer berhasil diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoadCustomerData();
-                        ClearInputFields();
-                        selectedCustomerId = -1;
+                        int resultCode = Convert.ToInt32(reader["ResultCode"]);
+                        string resultMessage = reader["ResultMessage"].ToString();
+
+                        if (resultCode == 1)
+                        {
+                            MessageBox.Show(resultMessage, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadCustomerData();
+                            ClearInputFields();
+                            selectedCustomerId = -1; // Reset selectedId
+                        }
+                        else
+                        {
+                            MessageBox.Show(resultMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Gagal memperbarui customer:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Terjadi kesalahan saat memperbarui customer:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -414,22 +438,35 @@ namespace UCP_PABD
                     try
                     {
                         conn.Open();
-                        string query = "DELETE FROM Customer WHERE ID_Customer = @ID";
-                        SqlCommand cmd = new SqlCommand(query, conn);
-                        cmd.Parameters.AddWithValue("@ID", selectedCustomerId);
+                        // Ganti DELETE dengan pemanggilan Stored Procedure
+                        SqlCommand cmd = new SqlCommand("usp_DeleteCustomer", conn);
+                        cmd.CommandType = CommandType.StoredProcedure; // Penting: Menentukan tipe command
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        if (rowsAffected > 0)
+                        cmd.Parameters.AddWithValue("@ID_Customer", selectedCustomerId);
+
+                        // Untuk mengambil hasil dari Stored Procedure (ResultCode dan ResultMessage)
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
                         {
-                            MessageBox.Show("Data customer berhasil dihapus.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            LoadCustomerData();
-                            ClearInputFields();
-                            selectedCustomerId = -1;
+                            int resultCode = Convert.ToInt32(reader["ResultCode"]);
+                            string resultMessage = reader["ResultMessage"].ToString();
+
+                            if (resultCode == 1)
+                            {
+                                MessageBox.Show(resultMessage, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                LoadCustomerData();
+                                ClearInputFields();
+                                selectedCustomerId = -1; // Reset selectedId
+                            }
+                            else
+                            {
+                                MessageBox.Show(resultMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Gagal menghapus data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("Terjadi kesalahan saat menghapus data:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

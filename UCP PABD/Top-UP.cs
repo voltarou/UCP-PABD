@@ -44,44 +44,69 @@ namespace UCP_PABD
             }
         }
 
-        
+
 
         private void Tambah_Click(object sender, EventArgs e)
         {
-            string namaPaket = NamaPaket.Text;
-            if (!decimal.TryParse(Hargaa.Text, out decimal harga))
+            string namaPaket = NamaPaket.Text.Trim();
+            if (string.IsNullOrWhiteSpace(namaPaket))
             {
-                MessageBox.Show("Harga harus berupa angka.");
+                MessageBox.Show("Nama Paket tidak boleh kosong.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Validasi ID Game yang dimasukkan langsung di TextBox
-            if (!int.TryParse(ID_Game.Text, out int idGame))
+            if (!decimal.TryParse(Hargaa.Text.Trim(), out decimal harga) || harga <= 0)
             {
-                MessageBox.Show("ID Game harus berupa angka.");
+                MessageBox.Show("Harga harus berupa angka positif.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string query = "INSERT INTO Paket_TopUp (NamaPaket, Harga, ID_Game) VALUES (@NamaPaket, @Harga, @ID_Game)";
+            if (!int.TryParse(ID_Game.Text.Trim(), out int idGame))
+            {
+                MessageBox.Show("ID Game harus berupa angka.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            
+
             using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
             {
-                using (var command = new SqlCommand(query, connection))
+                try
                 {
+                    connection.Open();
+                    SqlCommand command = new SqlCommand("usp_InsertPaketTopUp", connection);
+                    command.CommandType = CommandType.StoredProcedure; // Penting: Menentukan tipe command
+
                     command.Parameters.AddWithValue("@NamaPaket", namaPaket);
                     command.Parameters.AddWithValue("@Harga", harga);
-                    command.Parameters.AddWithValue("@ID_Game", idGame);  // Menggunakan nilai dari TextBox ID_Game
+                    command.Parameters.AddWithValue("@ID_Game", idGame);
 
-                    try
+                    SqlDataReader reader = command.ExecuteReader();
+                    if (reader.Read())
                     {
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                        MessageBox.Show("Data berhasil ditambahkan.");
-                        RefreshPaketGrid();
+                        int resultCode = Convert.ToInt32(reader["ResultCode"]);
+                        string resultMessage = reader["ResultMessage"].ToString();
+
+                        if (resultCode == 1)
+                        {
+                            MessageBox.Show(resultMessage, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            RefreshPaketGrid();
+                            // Clear input fields (optional, add a ClearFields() method if needed)
+                            NamaPaket.Clear();
+                            Hargaa.Clear();
+                            ID_Game.Clear();
+                            NamaPaket.Focus();
+                        }
+                        else
+                        {
+                            MessageBox.Show(resultMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
-                    }
+                    reader.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Terjadi kesalahan saat menambahkan data paket: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -90,82 +115,122 @@ namespace UCP_PABD
         {
             if (DGVTOPUUP.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Pilih baris yang ingin diedit.");
+                MessageBox.Show("Pilih baris yang ingin diedit.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             int idPaket = Convert.ToInt32(DGVTOPUUP.SelectedRows[0].Cells["ID_Paket"].Value);
-            string namaPaket = NamaPaket.Text;
-            if (!decimal.TryParse(Hargaa.Text, out decimal harga))
+            string namaPaket = NamaPaket.Text.Trim();
+            if (string.IsNullOrWhiteSpace(namaPaket))
             {
-                MessageBox.Show("Harga harus berupa angka.");
+                MessageBox.Show("Nama Paket tidak boleh kosong.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Validasi ID Game yang dimasukkan langsung di TextBox
-            if (!int.TryParse(ID_Game.Text, out int idGame))
+            if (!decimal.TryParse(Hargaa.Text.Trim(), out decimal harga) || harga <= 0)
             {
-                MessageBox.Show("ID Game harus berupa angka.");
+                MessageBox.Show("Harga harus berupa angka positif.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string query = "UPDATE Paket_TopUp SET NamaPaket = @NamaPaket, Harga = @Harga, ID_Game = @ID_Game WHERE ID_Paket = @ID";
+            if (!int.TryParse(ID_Game.Text.Trim(), out int idGame))
+            {
+                MessageBox.Show("ID Game harus berupa angka.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
             {
-                using (var command = new SqlCommand(query, connection))
+                try
                 {
-                    command.Parameters.AddWithValue("@ID", idPaket);
+                    connection.Open();
+                    SqlCommand command = new SqlCommand("usp_UpdatePaketTopUp", connection);
+                    command.CommandType = CommandType.StoredProcedure; // Penting: Menentukan tipe command
+
+                    command.Parameters.AddWithValue("@ID_Paket", idPaket);
                     command.Parameters.AddWithValue("@NamaPaket", namaPaket);
                     command.Parameters.AddWithValue("@Harga", harga);
-                    command.Parameters.AddWithValue("@ID_Game", idGame);  // Menggunakan nilai dari TextBox ID_Game
+                    command.Parameters.AddWithValue("@ID_Game", idGame);
 
-                    try
+                    SqlDataReader reader = command.ExecuteReader();
+                    if (reader.Read())
                     {
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                        MessageBox.Show("Data berhasil diperbarui.");
-                        RefreshPaketGrid();
+                        int resultCode = Convert.ToInt32(reader["ResultCode"]);
+                        string resultMessage = reader["ResultMessage"].ToString();
+
+                        if (resultCode == 1)
+                        {
+                            MessageBox.Show(resultMessage, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            RefreshPaketGrid();
+                            // Clear input fields (optional)
+                            NamaPaket.Clear();
+                            Hargaa.Clear();
+                            ID_Game.Clear();
+                            NamaPaket.Focus();
+                        }
+                        else
+                        {
+                            MessageBox.Show(resultMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
-                    }
+                    reader.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Terjadi kesalahan saat memperbarui data paket: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
-
 
         private void Hapus_Click(object sender, EventArgs e)
         {
             if (DGVTOPUUP.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Pilih baris yang ingin dihapus.");
+                MessageBox.Show("Pilih baris yang ingin dihapus.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             int idPaket = Convert.ToInt32(DGVTOPUUP.SelectedRows[0].Cells["ID_Paket"].Value);
 
-            var confirmResult = MessageBox.Show("Yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo);
+            var confirmResult = MessageBox.Show("Yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirmResult == DialogResult.Yes)
             {
-                string query = "DELETE FROM Paket_TopUp WHERE ID_Paket = @ID";
                 using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
                 {
-                    using (var command = new SqlCommand(query, connection))
+                    try
                     {
-                        command.Parameters.AddWithValue("@ID", idPaket);
+                        connection.Open();
+                        SqlCommand command = new SqlCommand("usp_DeletePaketTopUp", connection);
+                        command.CommandType = CommandType.StoredProcedure; // Penting: Menentukan tipe command
 
-                        try
+                        command.Parameters.AddWithValue("@ID_Paket", idPaket);
+
+                        SqlDataReader reader = command.ExecuteReader();
+                        if (reader.Read())
                         {
-                            connection.Open();
-                            command.ExecuteNonQuery();
-                            MessageBox.Show("Data berhasil dihapus.");
-                            RefreshPaketGrid();
+                            int resultCode = Convert.ToInt32(reader["ResultCode"]);
+                            string resultMessage = reader["ResultMessage"].ToString();
+
+                            if (resultCode == 1)
+                            {
+                                MessageBox.Show(resultMessage, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                RefreshPaketGrid();
+                                // Clear input fields (optional)
+                                NamaPaket.Clear();
+                                Hargaa.Clear();
+                                ID_Game.Clear();
+                                NamaPaket.Focus();
+                            }
+                            else
+                            {
+                                MessageBox.Show(resultMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
-                        }
+                        reader.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Terjadi kesalahan saat menghapus data paket: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
