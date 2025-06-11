@@ -25,7 +25,7 @@ namespace UCP_PABD
         {
             InitializeComponent();
             this.Load += Transaksi_Load;
-            LoadComboBoxData();
+            LoadComboBoxData(); // Memuat data untuk ComboBox saat form diinisialisasi
             DGVTransaksi.MultiSelect = true;
             DGVTransaksi.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
@@ -59,38 +59,59 @@ namespace UCP_PABD
 
         private void LoadTransaksiData()
         {
-            string query = "SELECT t.ID_Transaksi, t.ID_Customer, t.ID_Paket, t.ID_Pembayaran, t.Status, t.TanggalTransaksi FROM Transaksi t";
+            // Query untuk mengambil data transaksi, termasuk nama dari tabel terkait
+            // Memastikan alias kolom sesuai dengan nama kolom aktual di tabel master
+            string query = @"
+                SELECT 
+                    t.ID_Transaksi, 
+                    t.ID_Customer, 
+                    c.Nama AS NamaCustomer, -- Menggunakan c.Nama dari tabel Customer dan alias sebagai NamaCustomer
+                    t.ID_Paket, 
+                    pt.NamaPaket, -- Menggunakan NamaPaket dari tabel Paket_TopUp
+                    t.ID_Pembayaran, 
+                    sp.Metode AS MetodePembayaran, -- Menggunakan sp.Metode dari tabel Sistem_Pembayaran dan alias sebagai MetodePembayaran
+                    t.Status, 
+                    t.TanggalTransaksi 
+                FROM Transaksi t
+                LEFT JOIN Customer c ON t.ID_Customer = c.ID_Customer
+                LEFT JOIN Paket_TopUp pt ON t.ID_Paket = pt.ID_Paket
+                LEFT JOIN Sistem_Pembayaran sp ON t.ID_Pembayaran = sp.ID_Pembayaran;
+            ";
 
             System.Data.DataTable dt = ExecuteQuery(query);
 
+            // Logic penentuan status (Pending/Gagal/Sukses) tetap sama
             foreach (DataRow row in dt.Rows)
             {
                 bool isEmpty = false;
                 bool isInvalid = false;
 
-                if (row["ID_Customer"] == DBNull.Value)
+                // Periksa ID_Customer
+                if (row["ID_Customer"] == DBNull.Value || string.IsNullOrEmpty(row["ID_Customer"].ToString()))
                 {
                     isEmpty = true;
                 }
-                else if (!ValidateID(Convert.ToInt32(row["ID_Customer"]), "Customer"))
+                else if (row["ID_Customer"] != DBNull.Value && !ValidateID(Convert.ToInt32(row["ID_Customer"]), "Customer"))
                 {
                     isInvalid = true;
                 }
 
-                if (row["ID_Paket"] == DBNull.Value)
+                // Periksa ID_Paket
+                if (row["ID_Paket"] == DBNull.Value || string.IsNullOrEmpty(row["ID_Paket"].ToString()))
                 {
                     isEmpty = true;
                 }
-                else if (!ValidateID(Convert.ToInt32(row["ID_Paket"]), "Paket_TopUp"))
+                else if (row["ID_Paket"] != DBNull.Value && !ValidateID(Convert.ToInt32(row["ID_Paket"]), "Paket_TopUp"))
                 {
                     isInvalid = true;
                 }
 
-                if (row["ID_Pembayaran"] == DBNull.Value)
+                // Periksa ID_Pembayaran
+                if (row["ID_Pembayaran"] == DBNull.Value || string.IsNullOrEmpty(row["ID_Pembayaran"].ToString()))
                 {
                     isEmpty = true;
                 }
-                else if (!ValidateID(Convert.ToInt32(row["ID_Pembayaran"]), "Sistem_Pembayaran"))
+                else if (row["ID_Pembayaran"] != DBNull.Value && !ValidateID(Convert.ToInt32(row["ID_Pembayaran"]), "Sistem_Pembayaran"))
                 {
                     isInvalid = true;
                 }
@@ -146,30 +167,47 @@ namespace UCP_PABD
             bool isEmpty = false;
             bool isInvalid = false;
 
-            if (!string.IsNullOrWhiteSpace(Idcust.Text) && int.TryParse(Idcust.Text, out int custId))
+            // Mengambil ID dari ComboBox, jika dipilih
+            // Jika ComboBox kosong, fallback ke TextBox
+            if (CmbCust.SelectedItem != null && int.TryParse(CmbCust.SelectedItem.ToString(), out int custIdFromCmb))
             {
-                if (ValidateID(custId, "Customer")) idCustomer = custId;
-                else isInvalid = true;
+                idCustomer = custIdFromCmb;
+                if (!ValidateID((int)idCustomer, "Customer")) isInvalid = true;
+            }
+            else if (!string.IsNullOrWhiteSpace(Idcust.Text) && int.TryParse(Idcust.Text, out int custIdFromText))
+            {
+                idCustomer = custIdFromText;
+                if (!ValidateID((int)idCustomer, "Customer")) isInvalid = true;
             }
             else
             {
                 isEmpty = true;
             }
 
-            if (!string.IsNullOrWhiteSpace(Idpaket.Text) && int.TryParse(Idpaket.Text, out int paketId))
+            if (CmbGame.SelectedItem != null && int.TryParse(CmbGame.SelectedItem.ToString(), out int paketIdFromCmb))
             {
-                if (ValidateID(paketId, "Paket_TopUp")) idPaket = paketId;
-                else isInvalid = true;
+                idPaket = paketIdFromCmb;
+                if (!ValidateID((int)idPaket, "Paket_TopUp")) isInvalid = true;
+            }
+            else if (!string.IsNullOrWhiteSpace(Idpaket.Text) && int.TryParse(Idpaket.Text, out int paketIdFromText))
+            {
+                idPaket = paketIdFromText;
+                if (!ValidateID((int)idPaket, "Paket_TopUp")) isInvalid = true;
             }
             else
             {
                 isEmpty = true;
             }
 
-            if (!string.IsNullOrWhiteSpace(Idpembayaran.Text) && int.TryParse(Idpembayaran.Text, out int bayarId))
+            if (CmbPembayaran.SelectedItem != null && int.TryParse(CmbPembayaran.SelectedItem.ToString(), out int bayarIdFromCmb))
             {
-                if (ValidateID(bayarId, "Sistem_Pembayaran")) idPembayaran = bayarId;
-                else isInvalid = true;
+                idPembayaran = bayarIdFromCmb;
+                if (!ValidateID((int)idPembayaran, "Sistem_Pembayaran")) isInvalid = true;
+            }
+            else if (!string.IsNullOrWhiteSpace(Idpembayaran.Text) && int.TryParse(Idpembayaran.Text, out int bayarIdFromText))
+            {
+                idPembayaran = bayarIdFromText;
+                if (!ValidateID((int)idPembayaran, "Sistem_Pembayaran")) isInvalid = true;
             }
             else
             {
@@ -180,6 +218,8 @@ namespace UCP_PABD
                 status = "Pending";
             else if (isInvalid)
                 status = "Gagal";
+            else
+                status = "Sukses"; // Pastikan status menjadi Sukses jika semua valid
 
             using (SqlConnection con = new SqlConnection(connectionString))
             {
@@ -194,7 +234,7 @@ namespace UCP_PABD
                     cmd.Parameters.AddWithValue("@ID_Customer", idCustomer);
                     cmd.Parameters.AddWithValue("@ID_Paket", idPaket);
                     cmd.Parameters.AddWithValue("@ID_Pembayaran", idPembayaran);
-                    cmd.Parameters.AddWithValue("@Status", status);
+                    cmd.Parameters.AddWithValue("@Status", status); // Status ditentukan di C# dan akan diproses oleh trigger server-side
 
                     cmd.ExecuteNonQuery();
                     transaction.Commit(); // Commit transaksi jika berhasil
@@ -273,54 +313,47 @@ namespace UCP_PABD
                 bool isInvalid = false;
                 bool isEmpty = false;
 
-                if (!string.IsNullOrWhiteSpace(Idcust.Text))
+                // Mengambil ID dari ComboBox, jika dipilih
+                // Jika ComboBox kosong, fallback ke TextBox
+                if (CmbCust.SelectedItem != null && int.TryParse(CmbCust.SelectedItem.ToString(), out int custIdFromCmb))
                 {
-                    if (int.TryParse(Idcust.Text, out int parsedIdCust))
-                    {
-                        idCustomer = parsedIdCust;
-                        if (!ValidateID((int)idCustomer, "Customer")) isInvalid = true;
-                    }
-                    else
-                    {
-                        MessageBox.Show("ID Customer harus berupa angka.", "Error Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                    idCustomer = custIdFromCmb;
+                    if (!ValidateID((int)idCustomer, "Customer")) isInvalid = true;
+                }
+                else if (!string.IsNullOrWhiteSpace(Idcust.Text) && int.TryParse(Idcust.Text, out int custIdFromText))
+                {
+                    idCustomer = custIdFromText;
+                    if (!ValidateID((int)idCustomer, "Customer")) isInvalid = true;
                 }
                 else
                 {
                     isEmpty = true;
                 }
 
-                if (!string.IsNullOrWhiteSpace(Idpaket.Text))
+                if (CmbGame.SelectedItem != null && int.TryParse(CmbGame.SelectedItem.ToString(), out int paketIdFromCmb))
                 {
-                    if (int.TryParse(Idpaket.Text, out int parsedIdPaket))
-                    {
-                        idPaket = parsedIdPaket;
-                        if (!ValidateID((int)idPaket, "Paket_TopUp")) isInvalid = true;
-                    }
-                    else
-                    {
-                        MessageBox.Show("ID Paket harus berupa angka.", "Error Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                    idPaket = paketIdFromCmb;
+                    if (!ValidateID((int)idPaket, "Paket_TopUp")) isInvalid = true;
+                }
+                else if (!string.IsNullOrWhiteSpace(Idpaket.Text) && int.TryParse(Idpaket.Text, out int paketIdFromText))
+                {
+                    idPaket = paketIdFromText;
+                    if (!ValidateID((int)idPaket, "Paket_TopUp")) isInvalid = true;
                 }
                 else
                 {
                     isEmpty = true;
                 }
 
-                if (!string.IsNullOrWhiteSpace(Idpembayaran.Text))
+                if (CmbPembayaran.SelectedItem != null && int.TryParse(CmbPembayaran.SelectedItem.ToString(), out int bayarIdFromCmb))
                 {
-                    if (int.TryParse(Idpembayaran.Text, out int parsedIdPembayaran))
-                    {
-                        idPembayaran = parsedIdPembayaran;
-                        if (!ValidateID((int)idPembayaran, "Sistem_Pembayaran")) isInvalid = true;
-                    }
-                    else
-                    {
-                        MessageBox.Show("ID Pembayaran harus berupa angka.", "Error Input", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                    idPembayaran = bayarIdFromCmb;
+                    if (!ValidateID((int)idPembayaran, "Sistem_Pembayaran")) isInvalid = true;
+                }
+                else if (!string.IsNullOrWhiteSpace(Idpembayaran.Text) && int.TryParse(Idpembayaran.Text, out int bayarIdFromText))
+                {
+                    idPembayaran = bayarIdFromText;
+                    if (!ValidateID((int)idPembayaran, "Sistem_Pembayaran")) isInvalid = true;
                 }
                 else
                 {
@@ -329,6 +362,7 @@ namespace UCP_PABD
 
                 if (isEmpty) status = "Pending";
                 else if (isInvalid) status = "Gagal";
+                else status = "Sukses"; // Pastikan status menjadi Sukses jika semua valid
 
                 if (status == "Pending")
                 {
@@ -457,6 +491,14 @@ namespace UCP_PABD
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = DGVTransaksi.Rows[e.RowIndex];
+                // Mengisi ComboBoxes dan TextBoxes dengan nilai ID dari baris yang dipilih
+                // ComboBoxes akan menampilkan ID, dan TextBoxes akan terisi secara otomatis
+                CmbCust.Text = row.Cells["ID_Customer"].Value.ToString();
+                CmbGame.Text = row.Cells["ID_Paket"].Value.ToString();
+                CmbPembayaran.Text = row.Cells["ID_Pembayaran"].Value.ToString();
+
+                // Pastikan Idcust, Idpaket, Idpembayaran juga terisi dengan ID numerik
+                // karena combobox SelectedIndexChanged akan memperbarui ini
                 Idcust.Text = row.Cells["ID_Customer"].Value.ToString();
                 Idpaket.Text = row.Cells["ID_Paket"].Value.ToString();
                 Idpembayaran.Text = row.Cells["ID_Pembayaran"].Value.ToString();
@@ -470,10 +512,12 @@ namespace UCP_PABD
 
         private void Idpembayaran_TextChanged(object sender, EventArgs e)
         {
+            // Tidak ada perubahan yang diperlukan di sini, ComboBox akan memperbarui ini
         }
 
         private void Idpaket_TextChanged(object sender, EventArgs e)
         {
+            // Tidak ada perubahan yang diperlukan di sini, ComboBox akan memperbarui ini
         }
 
         private void Hapus_Click(object sender, EventArgs e)
@@ -483,6 +527,7 @@ namespace UCP_PABD
 
         private void Idcust_TextChanged(object sender, EventArgs e)
         {
+            // Tidak ada perubahan yang diperlukan di sini, ComboBox akan memperbarui ini
         }
 
         private void ExportToExcel(DataGridView dgv, string filePath)
@@ -617,6 +662,7 @@ namespace UCP_PABD
                 {
                     con.Open();
 
+                    // Memuat ID_Customer ke CmbCust
                     SqlCommand cmdCustomer = new SqlCommand("SELECT ID_Customer FROM Customer", con);
                     SqlDataReader readerCustomer = cmdCustomer.ExecuteReader();
                     CmbCust.Items.Clear();
@@ -626,6 +672,7 @@ namespace UCP_PABD
                     }
                     readerCustomer.Close();
 
+                    // Memuat ID_Paket ke CmbGame
                     SqlCommand cmdPaket = new SqlCommand("SELECT ID_Paket FROM Paket_TopUp", con);
                     SqlDataReader readerPaket = cmdPaket.ExecuteReader();
                     CmbGame.Items.Clear();
@@ -635,6 +682,7 @@ namespace UCP_PABD
                     }
                     readerPaket.Close();
 
+                    // Memuat ID_Pembayaran ke CmbPembayaran
                     SqlCommand cmdPayment = new SqlCommand("SELECT ID_Pembayaran FROM Sistem_Pembayaran", con);
                     SqlDataReader readerPayment = cmdPayment.ExecuteReader();
                     CmbPembayaran.Items.Clear();
@@ -661,6 +709,10 @@ namespace UCP_PABD
             {
                 Idcust.Text = CmbCust.SelectedItem.ToString(); // Mengisi Idcust.Text dengan nilai yang dipilih dari CmbCust
             }
+            else
+            {
+                Idcust.Text = ""; // Kosongkan jika tidak ada pilihan
+            }
         }
 
         private void CmbGame_SelectedIndexChanged(object sender, EventArgs e)
@@ -668,6 +720,10 @@ namespace UCP_PABD
             if (CmbGame.SelectedItem != null)
             {
                 Idpaket.Text = CmbGame.SelectedItem.ToString(); // Mengisi Idpaket.Text dengan nilai yang dipilih dari CmbGame
+            }
+            else
+            {
+                Idpaket.Text = ""; // Kosongkan jika tidak ada pilihan
             }
         }
 
@@ -677,6 +733,10 @@ namespace UCP_PABD
             {
                 Idpembayaran.Text = CmbPembayaran.SelectedItem.ToString(); // Mengisi Idpembayaran.Text dengan nilai yang dipilih dari CmbPembayaran
             }
+            else
+            {
+                Idpembayaran.Text = ""; // Kosongkan jika tidak ada pilihan
+            }
         }
 
         private void ClearFields()
@@ -684,9 +744,9 @@ namespace UCP_PABD
             Idcust.Text = "";
             Idpaket.Text = "";
             Idpembayaran.Text = "";
-            CmbCust.SelectedIndex = -1;
-            CmbGame.SelectedIndex = -1;
-            CmbPembayaran.SelectedIndex = -1;
+            CmbCust.SelectedIndex = -1; // Mengosongkan pilihan ComboBox
+            CmbGame.SelectedIndex = -1; // Mengosongkan pilihan ComboBox
+            CmbPembayaran.SelectedIndex = -1; // Mengosongkan pilihan ComboBox
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
