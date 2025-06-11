@@ -110,6 +110,12 @@ namespace UCP_PABD
                 return;
             }
 
+            if (txtNama.Text.Any(char.IsDigit))
+            {
+                MessageBox.Show("Nama tidak boleh mengandung angka.", "Validasi Nama", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
@@ -377,6 +383,12 @@ namespace UCP_PABD
             if (!txtNoHP.Text.StartsWith("08"))
             {
                 MessageBox.Show("No HP harus dimulai dengan '08'.", "Validasi No HP", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (txtNama.Text.Any(char.IsDigit))
+            {
+                MessageBox.Show("Nama tidak boleh mengandung angka.", "Validasi Nama", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
