@@ -13,9 +13,13 @@ namespace UCP_PABD
 {
     public partial class Login : Form
     {
+        Koneksi Kn = new Koneksi(); // Membuat instance dari kelas Koneksi
+        private string strKonek; // Variabel untuk menyimpan string koneksi
         public Login()
         {
             InitializeComponent();
+            strKonek = Kn.connectionStirng();
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
         }
 
         private void lblUsername_Click(object sender, EventArgs e)
@@ -52,9 +56,9 @@ namespace UCP_PABD
             }
 
             // Ganti connection string sesuai konfigurasi database kamu
-            string connectionString = "Data Source=.;Initial Catalog=TopUpGameOL;Integrated Security=True"; // atau gunakan User ID & Password jika pakai SQL Auth
+            string strKonek = "Data Source=.;Initial Catalog=TopUpGameOL;Integrated Security=True"; // atau gunakan User ID & Password jika pakai SQL Auth
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(strKonek))
             {
                 try
                 {

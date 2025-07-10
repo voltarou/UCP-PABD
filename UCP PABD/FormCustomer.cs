@@ -1,13 +1,20 @@
-﻿using System;
+﻿
+using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
+
 
 namespace UCP_PABD
 {
     public partial class FormCustomer : Form
     {
+        Koneksi Kn = new Koneksi(); // Membuat instance dari kelas Koneksi
+        private string strKonek; // Variabel untuk menyimpan string koneksi
+
         private DataGridView dgvCustomer;
         private int selectedCustomerId = -1;
         private TextBox txtNama;
@@ -21,13 +28,17 @@ namespace UCP_PABD
         private Button Hapus;
         private Button Edit;
         private Button Next;
+        private Button Analisis;
         private Button Prev;
-        private readonly string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;";
+        // The connectionString variable is no longer needed as we will use strKonek
+        // private readonly string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;";
 
         public FormCustomer()
         {
             InitializeComponent();
             this.Load += FormCustomer_Load;
+            strKonek = Kn.connectionStirng(); // Mendapatkan string koneksi dari kelas Koneksi
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
         }
 
         private void FormCustomer_Load(object sender, EventArgs e)
@@ -38,7 +49,7 @@ namespace UCP_PABD
 
         private void LoadCustomerData()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(strKonek)) // Menggunakan strKonek
             {
                 try
                 {
@@ -58,7 +69,7 @@ namespace UCP_PABD
 
         private void LoadGamesToComboBox()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(strKonek)) // Menggunakan strKonek
             {
                 try
                 {
@@ -68,7 +79,8 @@ namespace UCP_PABD
                     SqlDataReader reader = cmd.ExecuteReader();
                     DataTable dt = new DataTable();
                     dt.Load(reader);
-                    
+                    // If you have a ComboBox for games, you would bind it here.
+                    // Example: cmbGame.DataSource = dt; cmbGame.DisplayMember = "NamaGame"; cmbGame.ValueMember = "ID_Game";
                 }
                 catch (Exception ex)
                 {
@@ -79,6 +91,7 @@ namespace UCP_PABD
 
         private void btnTambahCustomer_Click(object sender, EventArgs e)
         {
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             // Validasi inputan dari user (tetap sama)
             if (txtNama.Text.Trim() == "" || txtEmail.Text.Trim() == "" || txtNoHP.Text.Trim() == "")
             {
@@ -116,7 +129,7 @@ namespace UCP_PABD
                 return;
             }
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(strKonek)) // Menggunakan strKonek
             {
                 try
                 {
@@ -178,6 +191,7 @@ namespace UCP_PABD
             this.Next = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.Prev = new System.Windows.Forms.Button();
+            this.Analisis = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCustomer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -305,9 +319,20 @@ namespace UCP_PABD
             this.Prev.UseVisualStyleBackColor = true;
             this.Prev.Click += new System.EventHandler(this.Prev_Click);
             // 
+            // Analisis
+            // 
+            this.Analisis.Location = new System.Drawing.Point(47, 221);
+            this.Analisis.Name = "Analisis";
+            this.Analisis.Size = new System.Drawing.Size(75, 23);
+            this.Analisis.TabIndex = 14;
+            this.Analisis.Text = "Analisis";
+            this.Analisis.UseVisualStyleBackColor = true;
+            this.Analisis.Click += new System.EventHandler(this.Analisis_Click);
+            // 
             // FormCustomer
             // 
             this.ClientSize = new System.Drawing.Size(1322, 671);
+            this.Controls.Add(this.Analisis);
             this.Controls.Add(this.Prev);
             this.Controls.Add(this.Next);
             this.Controls.Add(this.Edit);
@@ -341,7 +366,7 @@ namespace UCP_PABD
                 txtEmail.Text = row.Cells["Email"].Value.ToString();
                 txtNoHP.Text = row.Cells["No_HP"].Value.ToString();
             }
-        } 
+        }
         private void txtNama_TextChanged(object sender, EventArgs e) { }
         private void txtEmail_TextChanged(object sender, EventArgs e) { }
         private void txtNoHP_TextChanged(object sender, EventArgs e) { }
@@ -349,6 +374,7 @@ namespace UCP_PABD
 
         private void Edit_Click(object sender, EventArgs e)
         {
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             if (selectedCustomerId == -1)
             {
                 MessageBox.Show("Pilih data customer terlebih dahulu.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -392,7 +418,7 @@ namespace UCP_PABD
                 return;
             }
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(strKonek)) // Menggunakan strKonek
             {
                 try
                 {
@@ -436,6 +462,7 @@ namespace UCP_PABD
 
         private void Hapus_Click(object sender, EventArgs e)
         {
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             if (selectedCustomerId == -1)
             {
                 MessageBox.Show("Pilih data customer yang ingin dihapus.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -445,7 +472,7 @@ namespace UCP_PABD
             DialogResult result = MessageBox.Show("Yakin ingin menghapus data customer ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                using (SqlConnection conn = new SqlConnection(strKonek)) // Menggunakan strKonek
                 {
                     try
                     {
@@ -494,7 +521,7 @@ namespace UCP_PABD
 
             if (confirm == DialogResult.Yes)
             {
-                this.Hide();          // sembunyikan form sekarang
+                this.Hide();         // sembunyikan form sekarang
                 using (var l = new Login())   // tampilkan form login
                 {
                     l.ShowDialog();
@@ -506,16 +533,131 @@ namespace UCP_PABD
 
         private void Prev_Click(object sender, EventArgs e)
         {
-           
-                this.Hide(); // Sembunyikan form login
 
-                // Tampilkan form customer
-                All fc = new All();
-                fc.ShowDialog();
+            this.Hide(); // Sembunyikan form customer
 
-                // Tutup form login setelah form customer ditutup
-                this.Close();
-            
+            // Tampilkan form All
+            All fc = new All();
+            fc.ShowDialog();
+
+            // Tutup form customer setelah form All ditutup
+            this.Close();
+
+        }
+
+
+        private void Analisis_Click(object sender, EventArgs e)
+        {
+            CheckIndexingStatus();
+            CheckQueryPerformance();
+        }
+
+        private void CheckIndexingStatus()
+        {
+            string query = @"
+        SELECT 
+            t.name AS TableName,
+            c.name AS ColumnName,
+            i.name AS IndexName,
+            i.type_desc AS IndexType,
+            i.is_primary_key,
+            i.is_unique
+        FROM sys.indexes i
+        INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+        INNER JOIN sys.columns c ON ic.object_id = c.object_id AND c.column_id = ic.column_id
+        INNER JOIN sys.tables t ON i.object_id = t.object_id
+        WHERE t.name = 'Transaksi' AND c.name IN ('ID_Customer', 'ID_Paket', 'ID_Pembayaran');
+    ";
+
+            using (SqlConnection con = new SqlConnection(strKonek))
+            {
+                try
+                {
+                    con.Open();
+
+                    // Mulai stopwatch
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    stopwatch.Stop(); // Hentikan stopwatch
+                    long elapsedMs = stopwatch.ElapsedMilliseconds;
+
+                    StringBuilder result = new StringBuilder();
+                    result.AppendLine($"Durasi Eksekusi Query: {elapsedMs} ms");
+                    result.AppendLine("----------------------------------------");
+
+                    while (reader.Read())
+                    {
+                        result.AppendLine($"Kolom: {reader["ColumnName"]}, " +
+                                          $"Index: {reader["IndexName"]}, " +
+                                          $"Tipe: {reader["IndexType"]}, " +
+                                          $"Unique: {reader["is_unique"]}, PrimaryKey: {reader["is_primary_key"]}");
+                    }
+
+                    if (result.ToString().Contains("Kolom:") == false)
+                    {
+                        MessageBox.Show("Tidak ada index ditemukan pada kolom ID_Customer, ID_Paket, atau ID_Pembayaran.\n" +
+                                        $"Durasi: {elapsedMs} ms", "Analisis Indexing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else
+                    {
+                        MessageBox.Show(result.ToString(), "Analisis Indexing", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Gagal menganalisis indexing: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void CheckQueryPerformance()
+        {
+            string query = @"
+        SELECT 
+            t.ID_Transaksi, 
+            t.ID_Customer, 
+            c.Nama AS NamaCustomer,
+            t.ID_Paket, 
+            pt.NamaPaket,
+            t.ID_Pembayaran, 
+            sp.Metode AS MetodePembayaran,
+            t.Status, 
+            t.TanggalTransaksi 
+        FROM Transaksi t
+        LEFT JOIN Customer c ON t.ID_Customer = c.ID_Customer
+        LEFT JOIN Paket_TopUp pt ON t.ID_Paket = pt.ID_Paket
+        LEFT JOIN Sistem_Pembayaran sp ON t.ID_Pembayaran = sp.ID_Pembayaran;
+    ";
+
+            using (SqlConnection con = new SqlConnection(strKonek))
+            {
+                try
+                {
+                    con.Open();
+
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    System.Data.DataTable dt = new System.Data.DataTable();
+                    adapter.Fill(dt);
+
+                    stopwatch.Stop();
+                    long elapsedMs = stopwatch.ElapsedMilliseconds;
+
+                    MessageBox.Show($"Query berhasil dijalankan.\nJumlah baris: {dt.Rows.Count}\nDurasi eksekusi: {elapsedMs} ms",
+                                    "Analisis Performa Query", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Gagal menjalankan query: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }

@@ -12,9 +12,13 @@ namespace UCP_PABD
 {
     public partial class All : Form
     {
+        Koneksi Kn = new Koneksi(); // Membuat instance dari kelas Koneksi
+        private string strKonek; // Variabel untuk menyimpan string koneksi
         public All()
         {
             InitializeComponent();
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
+
         }
 
         private void Customer_Click(object sender, EventArgs e)

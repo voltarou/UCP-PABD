@@ -14,20 +14,24 @@ using System.IO;
 using Excel = Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Interop.Excel;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace UCP_PABD
 {
     public partial class Transaksi : Form
     {
-        private string connectionString = "Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;";
+        Koneksi Kn = new Koneksi(); // Membuat instance dari kelas Koneksi
+        private string strKonek; // Variabel untuk menyimpan string koneksi
 
         public Transaksi()
         {
             InitializeComponent();
             this.Load += Transaksi_Load;
-            LoadComboBoxData(); // Memuat data untuk ComboBox saat form diinisialisasi
             DGVTransaksi.MultiSelect = true;
             DGVTransaksi.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            strKonek = Kn.connectionStirng(); // Initialize strKonek FIRST
+            LoadComboBoxData(); // Then call LoadComboBoxData()
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
         }
 
         private void Prev_Click(object sender, EventArgs e)
@@ -37,6 +41,8 @@ namespace UCP_PABD
             mp.ShowDialog();
             this.Close();
         }
+
+
 
         private void button2_Click(object sender, EventArgs e)
         {
@@ -80,55 +86,7 @@ namespace UCP_PABD
 
             System.Data.DataTable dt = ExecuteQuery(query);
 
-            // Logic penentuan status (Pending/Gagal/Sukses) tetap sama
-            foreach (DataRow row in dt.Rows)
-            {
-                bool isEmpty = false;
-                bool isInvalid = false;
-
-                // Periksa ID_Customer
-                if (row["ID_Customer"] == DBNull.Value || string.IsNullOrEmpty(row["ID_Customer"].ToString()))
-                {
-                    isEmpty = true;
-                }
-                else if (row["ID_Customer"] != DBNull.Value && !ValidateID(Convert.ToInt32(row["ID_Customer"]), "Customer"))
-                {
-                    isInvalid = true;
-                }
-
-                // Periksa ID_Paket
-                if (row["ID_Paket"] == DBNull.Value || string.IsNullOrEmpty(row["ID_Paket"].ToString()))
-                {
-                    isEmpty = true;
-                }
-                else if (row["ID_Paket"] != DBNull.Value && !ValidateID(Convert.ToInt32(row["ID_Paket"]), "Paket_TopUp"))
-                {
-                    isInvalid = true;
-                }
-
-                // Periksa ID_Pembayaran
-                if (row["ID_Pembayaran"] == DBNull.Value || string.IsNullOrEmpty(row["ID_Pembayaran"].ToString()))
-                {
-                    isEmpty = true;
-                }
-                else if (row["ID_Pembayaran"] != DBNull.Value && !ValidateID(Convert.ToInt32(row["ID_Pembayaran"]), "Sistem_Pembayaran"))
-                {
-                    isInvalid = true;
-                }
-
-                if (isEmpty)
-                {
-                    row["Status"] = "Pending";
-                }
-                else if (isInvalid)
-                {
-                    row["Status"] = "Gagal";
-                }
-                else
-                {
-                    row["Status"] = "Sukses";
-                }
-            }
+            
 
             DGVTransaksi.DataSource = dt;
         }
@@ -137,7 +95,7 @@ namespace UCP_PABD
         {
             System.Data.DataTable dt = new System.Data.DataTable();
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = new SqlConnection(strKonek))
             {
                 try
                 {
@@ -166,7 +124,7 @@ namespace UCP_PABD
 
             bool isEmpty = false;
             bool isInvalid = false;
-
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             // Mengambil ID dari ComboBox, jika dipilih
             // Jika ComboBox kosong, fallback ke TextBox
             if (CmbCust.SelectedItem != null && int.TryParse(CmbCust.SelectedItem.ToString(), out int custIdFromCmb))
@@ -221,7 +179,7 @@ namespace UCP_PABD
             else
                 status = "Sukses"; // Pastikan status menjadi Sukses jika semua valid
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = new SqlConnection(strKonek))
             {
                 con.Open();
                 SqlTransaction transaction = con.BeginTransaction(); // Memulai transaksi
@@ -277,7 +235,7 @@ namespace UCP_PABD
 
             string query = $"SELECT COUNT(*) FROM {tableName} WHERE {columnName} = @ID";
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = new SqlConnection(strKonek))
             {
                 try
                 {
@@ -315,6 +273,9 @@ namespace UCP_PABD
 
                 // Mengambil ID dari ComboBox, jika dipilih
                 // Jika ComboBox kosong, fallback ke TextBox
+
+                if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
+
                 if (CmbCust.SelectedItem != null && int.TryParse(CmbCust.SelectedItem.ToString(), out int custIdFromCmb))
                 {
                     idCustomer = custIdFromCmb;
@@ -344,6 +305,8 @@ namespace UCP_PABD
                 {
                     isEmpty = true;
                 }
+
+
 
                 if (CmbPembayaran.SelectedItem != null && int.TryParse(CmbPembayaran.SelectedItem.ToString(), out int bayarIdFromCmb))
                 {
@@ -377,7 +340,7 @@ namespace UCP_PABD
                     MessageBox.Show("Data valid. Status di-set menjadi Sukses.", "Status Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(strKonek))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction(); // Memulai transaksi
@@ -440,9 +403,11 @@ namespace UCP_PABD
                         MessageBoxIcon.Warning);
                 }
 
+                if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
+
                 if (confirm == DialogResult.Yes)
                 {
-                    using (SqlConnection con = new SqlConnection(connectionString))
+                    using (SqlConnection con = new SqlConnection(strKonek))
                     {
                         con.Open();
                         SqlTransaction transaction = con.BeginTransaction(); // Memulai transaksi
@@ -639,6 +604,8 @@ namespace UCP_PABD
                 FileName = "DataTransaksi"
             };
 
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
+
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 string filePath = saveFileDialog.FileName;
@@ -656,7 +623,7 @@ namespace UCP_PABD
 
         private void LoadComboBoxData()
         {
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = new SqlConnection(strKonek))
             {
                 try
                 {
@@ -752,6 +719,121 @@ namespace UCP_PABD
         private void pictureBox1_Click(object sender, EventArgs e)
         {
             // Tidak ada logika yang perlu diubah di sini
+        }
+
+        private void CheckIndexingStatus()
+        {
+            string query = @"
+        SELECT 
+            t.name AS TableName,
+            c.name AS ColumnName,
+            i.name AS IndexName,
+            i.type_desc AS IndexType,
+            i.is_primary_key,
+            i.is_unique
+        FROM sys.indexes i
+        INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+        INNER JOIN sys.columns c ON ic.object_id = c.object_id AND c.column_id = ic.column_id
+        INNER JOIN sys.tables t ON i.object_id = t.object_id
+        WHERE t.name = 'Transaksi' AND c.name IN ('ID_Customer', 'ID_Paket', 'ID_Pembayaran');
+    ";
+
+            using (SqlConnection con = new SqlConnection(strKonek))
+            {
+                try
+                {
+                    con.Open();
+
+                    // Mulai stopwatch
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    stopwatch.Stop(); // Hentikan stopwatch
+                    long elapsedMs = stopwatch.ElapsedMilliseconds;
+
+                    StringBuilder result = new StringBuilder();
+                    result.AppendLine($"Durasi Eksekusi Query: {elapsedMs} ms");
+                    result.AppendLine("----------------------------------------");
+
+                    while (reader.Read())
+                    {
+                        result.AppendLine($"Kolom: {reader["ColumnName"]}, " +
+                                          $"Index: {reader["IndexName"]}, " +
+                                          $"Tipe: {reader["IndexType"]}, " +
+                                          $"Unique: {reader["is_unique"]}, PrimaryKey: {reader["is_primary_key"]}");
+                    }
+
+                    if (result.ToString().Contains("Kolom:") == false)
+                    {
+                        MessageBox.Show("Tidak ada index ditemukan pada kolom ID_Customer, ID_Paket, atau ID_Pembayaran.\n" +
+                                        $"Durasi: {elapsedMs} ms", "Analisis Indexing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else
+                    {
+                        MessageBox.Show(result.ToString(), "Analisis Indexing", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Gagal menganalisis indexing: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void CheckQueryPerformance()
+        {
+            string query = @"
+        SELECT 
+            t.ID_Transaksi, 
+            t.ID_Customer, 
+            c.Nama AS NamaCustomer,
+            t.ID_Paket, 
+            pt.NamaPaket,
+            t.ID_Pembayaran, 
+            sp.Metode AS MetodePembayaran,
+            t.Status, 
+            t.TanggalTransaksi 
+        FROM Transaksi t
+        LEFT JOIN Customer c ON t.ID_Customer = c.ID_Customer
+        LEFT JOIN Paket_TopUp pt ON t.ID_Paket = pt.ID_Paket
+        LEFT JOIN Sistem_Pembayaran sp ON t.ID_Pembayaran = sp.ID_Pembayaran;
+    ";
+
+            using (SqlConnection con = new SqlConnection(strKonek))
+            {
+                try
+                {
+                    con.Open();
+
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                    System.Data.DataTable dt = new System.Data.DataTable();
+                    adapter.Fill(dt);
+
+                    stopwatch.Stop();
+                    long elapsedMs = stopwatch.ElapsedMilliseconds;
+
+                    MessageBox.Show($"Query berhasil dijalankan.\nJumlah baris: {dt.Rows.Count}\nDurasi eksekusi: {elapsedMs} ms",
+                                    "Analisis Performa Query", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Gagal menjalankan query: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+
+        private void Analisis_Click(object sender, EventArgs e)
+        {
+            CheckIndexingStatus();
+            CheckQueryPerformance();
         }
     }
 }

@@ -45,6 +45,7 @@
             this.CmbCust = new System.Windows.Forms.ComboBox();
             this.CmbGame = new System.Windows.Forms.ComboBox();
             this.CmbPembayaran = new System.Windows.Forms.ComboBox();
+            this.Analisis = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.DGVTransaksi)).BeginInit();
             this.SuspendLayout();
@@ -211,11 +212,22 @@
             this.CmbPembayaran.TabIndex = 20;
             this.CmbPembayaran.SelectedIndexChanged += new System.EventHandler(this.CmbPembayaran_SelectedIndexChanged);
             // 
+            // Analisis
+            // 
+            this.Analisis.Location = new System.Drawing.Point(68, 237);
+            this.Analisis.Name = "Analisis";
+            this.Analisis.Size = new System.Drawing.Size(75, 23);
+            this.Analisis.TabIndex = 21;
+            this.Analisis.Text = "Analisis";
+            this.Analisis.UseVisualStyleBackColor = true;
+            this.Analisis.Click += new System.EventHandler(this.Analisis_Click);
+            // 
             // Transaksi
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1389, 689);
+            this.Controls.Add(this.Analisis);
             this.Controls.Add(this.CmbPembayaran);
             this.Controls.Add(this.CmbGame);
             this.Controls.Add(this.CmbCust);
@@ -261,5 +273,6 @@
         private System.Windows.Forms.ComboBox CmbCust;
         private System.Windows.Forms.ComboBox CmbGame;
         private System.Windows.Forms.ComboBox CmbPembayaran;
+        private System.Windows.Forms.Button Analisis;
     }
 }

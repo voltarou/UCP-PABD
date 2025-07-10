@@ -2,25 +2,33 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.SqlClient; // Pastikan namespace ini ada
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
 namespace UCP_PABD
 {
     public partial class Game : Form
     {
+        Koneksi Kn = new Koneksi(); // Membuat instance dari kelas Koneksi
+        private string strKonek; // Variabel untuk menyimpan string koneksi
+
         public Game()
         {
             InitializeComponent();
             this.Load += Game_Load;
+            strKonek = Kn.connectionStirng(); // Mendapatkan string koneksi dari kelas Koneksi
+            // Pastikan NetworkHelper.EnsureNetworkAvailable ada dan berfungsi dengan baik
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
         }
 
         private void Tambah_Click(object sender, EventArgs e)
         {
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             string namaGame = NMG1.Text;
             string publisher = PBLSHR.Text;
 
@@ -31,7 +39,7 @@ namespace UCP_PABD
             }
 
             string query = "INSERT INTO Games (NamaGame, Publisher) VALUES (@NamaGame, @Publisher)";
-            using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            using (var connection = new SqlConnection(strKonek)) // Menggunakan strKonek
             {
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -47,7 +55,17 @@ namespace UCP_PABD
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
+                        // *** BAGIAN INI YANG PENTING UNTUK MENANGANI DUPLIKASI ***
+                        // Memeriksa apakah exception adalah SqlException dan nomor errornya 2627 (Unique Key Violation)
+                        if (ex is SqlException sqlEx && sqlEx.Number == 2627)
+                        {
+                            MessageBox.Show("Nama game ini sudah ada. Mohon masukkan nama game yang berbeda.");
+                        }
+                        else
+                        {
+                            // Untuk error lainnya, tampilkan pesan error asli
+                            MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
+                        }
                     }
                 }
             }
@@ -55,6 +73,7 @@ namespace UCP_PABD
 
         private void Hapus_Click(object sender, EventArgs e)
         {
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             if (List.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Pilih baris yang ingin dihapus.");
@@ -71,12 +90,12 @@ namespace UCP_PABD
             var confirmResult = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo);
             if (confirmResult == DialogResult.Yes)
             {
-                string query = "DELETE FROM Games WHERE ID_Game = @ID_Game"; // diperbaiki di sini
-                using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+                string query = "DELETE FROM Games WHERE ID_Game = @ID_Game";
+                using (var connection = new SqlConnection(strKonek))
                 {
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@ID_Game", idGame); // sesuai parameter di query
+                        command.Parameters.AddWithValue("@ID_Game", idGame);
 
                         try
                         {
@@ -94,31 +113,27 @@ namespace UCP_PABD
             }
         }
 
-
-
         private void Edit_Click(object sender, EventArgs e)
         {
+            if (!NetworkHelper.EnsureNetworkAvailable(this)) return;
             if (List.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Pilih baris yang ingin diedit.");
                 return;
             }
 
-            // Mengambil ID_Game dari baris yang dipilih
             int idGame = Convert.ToInt32(List.SelectedRows[0].Cells["ID_Game"].Value);
             string namaGame = NMG1.Text;
             string publisher = PBLSHR.Text;
 
-            // Validasi input
             if (string.IsNullOrEmpty(namaGame) || string.IsNullOrEmpty(publisher))
             {
                 MessageBox.Show("Semua field harus diisi!");
                 return;
             }
 
-            // Update data sesuai dengan nama kolom di database
             string query = "UPDATE Games SET NamaGame = @NamaGame, Publisher = @Publisher WHERE ID_Game = @ID_Game";
-            using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            using (var connection = new SqlConnection(strKonek))
             {
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -135,12 +150,21 @@ namespace UCP_PABD
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
+                        // *** BAGIAN INI JUGA PENTING UNTUK MENANGANI DUPLIKASI SAAT EDIT ***
+                        // Memeriksa apakah exception adalah SqlException dan nomor errornya 2627 (Unique Key Violation)
+                        if (ex is SqlException sqlEx && sqlEx.Number == 2627)
+                        {
+                            MessageBox.Show("Nama game yang Anda masukkan sudah digunakan oleh game lain. Mohon pilih nama yang berbeda.");
+                        }
+                        else
+                        {
+                            // Untuk error lainnya, tampilkan pesan error asli
+                            MessageBox.Show($"Terjadi kesalahan: {ex.Message}");
+                        }
                     }
                 }
             }
         }
-
 
         private void List_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -164,8 +188,8 @@ namespace UCP_PABD
 
         private void RefreshDataGridView()
         {
-            string query = "SELECT ID_Game, NamaGame, Publisher FROM Games"; // Kolom ID_Game harus disertakan!
-            using (var connection = new SqlConnection("Data Source=VOLTAROU;Initial Catalog=TopUpGameOL;Integrated Security=True;"))
+            string query = "SELECT ID_Game, NamaGame, Publisher FROM Games";
+            using (var connection = new SqlConnection(strKonek))
             {
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -181,13 +205,9 @@ namespace UCP_PABD
 
         private void prev_Click(object sender, EventArgs e)
         {
-            this.Hide(); // Sembunyikan form login
-
-            // Tampilkan form customer
+            this.Hide();
             All fc = new All();
             fc.ShowDialog();
-
-            // Tutup form login setelah form customer ditutup
             this.Close();
         }
 
@@ -201,25 +221,26 @@ namespace UCP_PABD
 
             if (confirm == DialogResult.Yes)
             {
-                this.Hide();          // sembunyikan form sekarang
-                using (var l = new Login())   // tampilkan form login
+                this.Hide();
+                using (var l = new Login())
                 {
                     l.ShowDialog();
                 }
                 this.Close();
             }
-         }
-
-        
+        }
 
         private void Game_Load(object sender, EventArgs e)
         {
-           
-            RefreshDataGridView(); // jika ingin langsung tampilkan data ke DataGridView juga
+            RefreshDataGridView();
         }
 
-
         private void CMBGAME_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
         {
 
         }
